@@ -1,43 +1,119 @@
 {% extends "admin/layout.html" %}
 {% block title %}Barbers{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">Barbers</h2>
-<a href="{{ url_for('admin.add_barber') }}" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4 inline-block">Add Barber</a>
-<table class="min-w-full bg-white border border-gray-200">
-  <thead>
-    <tr>
-      <th class="px-4 py-2 border-b">ID</th>
-      <th class="px-4 py-2 border-b">Name</th>
-      <th class="px-4 py-2 border-b">Phone</th>
-      <th class="px-4 py-2 border-b">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for barber in pagination.items %}
-    <tr>
-      <td class="px-4 py-2 border-b">{{ barber.id }}</td>
-      <td class="px-4 py-2 border-b">{{ barber.name }}</td>
-      <td class="px-4 py-2 border-b">{{ barber.phone }}</td>
-      <td class="px-4 py-2 border-b">
-        <a href="{{ url_for('admin.edit_barber', barber_id=barber.id) }}" class="text-blue-600 mr-2">Edit</a>
-        <form action="{{ url_for('admin.delete_barber', barber_id=barber.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this barber?');">
-          <button type="submit" class="text-red-600">Delete</button>
-        </form>
-      </td>
-    </tr>
-    {% else %}
-    <tr><td colspan="4" class="px-4 py-2 border-b text-center">No barbers found.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-<div class="mt-4 flex justify-between">
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.list_barbers', page=pagination.prev_num) }}" class="text-blue-600">&laquo; Prev</a>
-  {% endif %}
-  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('admin.list_barbers', page=pagination.next_num) }}" class="text-blue-600">Next &raquo;</a>
-  {% endif %}
+<!-- ============ Page Header ============ -->
+<div class="mb-8 flex justify-between items-end flex-wrap gap-4">
+    <div>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+        <h2 class="font-serif text-3xl md:text-4xl font-bold text-light">
+            Our <span class="italic font-light">Barbers</span>
+        </h2>
+    </div>
+    <a href="{{ url_for('admin.add_barber') }}"
+       class="px-6 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+        + Add Barber
+    </a>
 </div>
+
+<!-- ============ Table ============ -->
+<div class="bg-secondary/30 border border-white/5 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead>
+                <tr class="border-b border-white/10">
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Barber</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Bookings</th>
+                    <th class="px-5 py-4 text-right text-[11px] font-bold tracking-widest uppercase text-light/50">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for barber in pagination.items %}
+                <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+
+                    <!-- Barber -->
+                    <td class="px-5 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 flex-none border border-primary/30 bg-primary/5 flex items-center justify-center">
+                                <span class="font-serif font-bold text-primary text-base">
+                                    {{ barber.name[0]|upper if barber.name else '?' }}
+                                </span>
+                            </div>
+                            <span class="font-serif text-base text-light">{{ barber.name }}</span>
+                        </div>
+                    </td>
+
+                    <!-- Bookings count -->
+                    <td class="px-5 py-4">
+                        {% set b_count = barber.bookings.count() if barber.bookings else 0 %}
+                        {% if b_count %}
+                            <span class="text-[11px] tracking-widest uppercase text-primary border border-primary/30 bg-primary/5 px-2.5 py-1">
+                                {{ b_count }} booking{{ 's' if b_count != 1 }}
+                            </span>
+                        {% else %}
+                            <span class="text-light/30 text-xs">—</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-5 py-4 text-right">
+                        <div class="flex justify-end gap-2 flex-wrap">
+                            <a href="{{ url_for('admin.barber_schedule', barber_id=barber.id) }}"
+                               class="px-4 py-1.5 border border-primary/40 text-primary text-[11px] font-semibold tracking-widest uppercase hover:bg-primary/10 transition-all">
+                                Schedule
+                            </a>
+                            <a href="{{ url_for('admin.edit_barber', barber_id=barber.id) }}"
+                               class="px-4 py-1.5 border border-white/10 text-light/70 text-[11px] font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                                Edit
+                            </a>
+                            <form action="{{ url_for('admin.delete_barber', barber_id=barber.id) }}"
+                                  method="post" class="inline"
+                                  onsubmit="return confirm('Delete this barber?');">
+                                <button type="submit"
+                                        class="px-4 py-1.5 border border-red-500/30 text-red-400 text-[11px] font-semibold tracking-widest uppercase hover:bg-red-500/10 transition-all">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3" class="px-5 py-16 text-center">
+                        <p class="text-light/40 text-sm">No barbers yet.</p>
+                        <a href="{{ url_for('admin.add_barber') }}"
+                           class="inline-block mt-4 text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+                            + Add your first barber
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============ Pagination ============ -->
+{% if pagination.pages > 1 %}
+<div class="mt-8 flex justify-between items-center">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('admin.list_barbers', page=pagination.prev_num) }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            ← Prev
+        </a>
+    {% else %}<span></span>{% endif %}
+
+    <span class="text-light/50 text-xs font-semibold tracking-widest uppercase">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('admin.list_barbers', page=pagination.next_num) }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            Next →
+        </a>
+    {% else %}<span></span>{% endif %}
+</div>
+{% endif %}
+
 {% endblock %}

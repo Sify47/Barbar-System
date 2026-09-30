@@ -1,4 +1,6 @@
 # app/__init__.py
+from importlib.resources import Package
+
 from flask import Flask, render_template
 from .extensions import db, migrate, socketio, login_manager
 from .config import DevelopmentConfig
@@ -24,6 +26,7 @@ def create_app():
     from .booking.routes import booking_bp
     from .payment.routes import payment_bp
     from .realtime.routes import realtime_bp
+    
 
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(customer_bp, url_prefix="/customer")
@@ -51,8 +54,12 @@ def create_app():
     def index():
         from app.models.barber import Barber
         from app.models.service import Service
+        from app.models.package import Package 
         barbers = Barber.query.all()
         services = Service.query.all()
-        return render_template("index.html", barbers=barbers, services=services)
+        packages = Package.query.all()
+        return render_template(
+        "index.html", barbers=barbers, services=services, packages=packages
+    )
 
     return app

@@ -30,51 +30,76 @@
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
-        input, select, textarea {
-            color-scheme: dark;
-        }
+        input, select, textarea { color-scheme: dark; }
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #d4af37;
             box-shadow: 0 0 0 1px #d4af37;
         }
+        .service-checkbox:checked + div .check-icon { opacity: 1; }
+        .service-checkbox:checked + div .check-box  { background-color: #d4af37; border-color: #d4af37; }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(212, 175, 55, 0.3);
+            border-top-color: #d4af37;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-dark text-light font-sans antialiased selection:bg-primary selection:text-dark">
 
-    <!-- Navigation -->
+    <!-- ============ Navigation ============ -->
     <nav class="fixed w-full z-50 bg-dark/90 backdrop-blur-md border-b border-white/10">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="/" class="font-serif text-2xl font-bold tracking-wide text-light">
+        <div class="container mx-auto px-5 sm:px-6 py-4 flex justify-between items-center">
+            <a href="/" class="font-serif text-xl sm:text-2xl font-bold tracking-wide text-light">
                 BARBER<span class="text-primary">.</span>
             </a>
             <div class="hidden md:flex space-x-10 text-sm font-medium tracking-widest uppercase text-light/70">
-                <a href="/#barbers" class="hover:text-primary transition-colors duration-300">Barbers</a>
-                <a href="/#services" class="hover:text-primary transition-colors duration-300">Services</a>
-                <a href="/#hours" class="hover:text-primary transition-colors duration-300">Hours</a>
+                <a href="/#barbers"  class="hover:text-primary transition-colors">Barbers</a>
+                <a href="/#packages" class="hover:text-primary transition-colors">Packages</a>
+                <a href="/#services" class="hover:text-primary transition-colors">Services</a>
+                <a href="/#hours"    class="hover:text-primary transition-colors">Hours</a>
             </div>
-            <a href="{{ url_for('booking.booking_form') }}" class="hidden md:inline-flex items-center px-6 py-2.5 border border-primary text-primary text-sm font-semibold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
-                Book Now
-            </a>
-            <button class="md:hidden text-light focus:outline-none">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
-            </button>
+
+            <div class="hidden md:flex items-center gap-4">
+                {% if logged_customer %}
+                    <a href="{{ url_for('customer.dashboard') }}"
+                       class="text-light/70 hover:text-primary text-xs font-semibold tracking-widest uppercase transition-colors">
+                        My Bookings
+                    </a>
+                    <form method="POST" action="{{ url_for('customer.logout') }}" class="inline">
+                        <button type="submit"
+                                class="text-red-400/70 hover:text-red-400 text-xs font-semibold tracking-widest uppercase transition-colors">
+                            Logout
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{{ url_for('customer.login') }}"
+                       class="text-light/70 hover:text-primary text-xs font-semibold tracking-widest uppercase transition-colors">
+                        Login
+                    </a>
+                {% endif %}
+            </div>
         </div>
     </nav>
 
-    <!-- Booking Form Section -->
-    <section class="min-h-screen pt-32 pb-24 px-6 flex items-center">
-        <div class="container mx-auto max-w-2xl">
+    <!-- ============ Booking Section ============ -->
+    <section class="min-h-screen pt-28 sm:pt-32 pb-24 px-5 sm:px-6">
+        <div class="container mx-auto max-w-3xl">
+
             <!-- Header -->
-            <div class="text-center mb-12">
-                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">Reserve Your Chair</p>
-                <h1 class="font-serif text-5xl md:text-6xl font-bold mb-4">
+            <div class="text-center mb-10 sm:mb-12">
+                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-3 sm:mb-4">Reserve Your Chair</p>
+                <h1 class="font-serif text-4xl sm:text-5xl md:text-6xl font-bold mb-4">
                     Book <span class="italic font-light">Now</span>
                 </h1>
-                <p class="text-light/50 text-lg font-light max-w-md mx-auto">
-                    Fill in your details and we'll confirm your appointment shortly.
+                <p class="text-light/50 text-base sm:text-lg font-light max-w-md mx-auto">
+                    Choose a package or pick one or more services — then tell us when.
                 </p>
             </div>
 
@@ -82,80 +107,272 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="mb-8 px-6 py-4 border-l-4 {% if category == 'success' %}border-green-500 bg-green-500/10 text-green-300{% else %}border-red-500 bg-red-500/10 text-red-300{% endif %}">
+                        <div class="mb-6 px-5 sm:px-6 py-4 border-l-4
+                                    {% if category == 'success' %}border-green-500 bg-green-500/10 text-green-300
+                                    {% else %}border-red-500 bg-red-500/10 text-red-300{% endif %} text-sm">
                             {{ message }}
                         </div>
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
-            <!-- Form -->
-            <form action="{{ url_for('booking.create') }}" method="POST" class="space-y-6 bg-secondary/30 border border-white/5 p-8 md:p-10">
-                
-                <!-- Name -->
+            <form action="{{ url_for('booking.create') }}" method="POST" autocomplete="off"
+                  class="space-y-8 bg-secondary/30 border border-white/5 p-6 sm:p-8 md:p-10">
+
+                <!-- ============ STEP 1: Booking type ============ -->
                 <div>
-                    <label for="name" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Full Name</label>
-                    <input type="text" name="name" id="name" required
-                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
-                           placeholder="John Doe">
-                </div>
+                    <p class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-3">
+                        What would you like to book?
+                    </p>
 
-                <!-- Phone & Email -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="phone" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Phone</label>
-                        <input type="tel" name="phone" id="phone" required
-                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
-                               placeholder="+20 123 456 7890">
-                    </div>
-                    <div>
-                        <label for="email" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Email</label>
-                        <input type="email" name="email" id="email" required
-                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
-                               placeholder="john@example.com">
-                    </div>
-                </div>
-
-                <!-- Barber & Service -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="barber_id" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Barber</label>
-                        <select name="barber_id" id="barber_id" required
-                                class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors appearance-none">
-                            <option value="" disabled selected class="text-light/30">Select a barber</option>
-                            {% for barber in barbers %}
-                                <option value="{{ barber.id }}">{{ barber.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div>
-                        <label for="service_id" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Service</label>
-                        <select name="service_id" id="service_id" required
-                                class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors appearance-none">
-                            <option value="" disabled selected class="text-light/30">Select a service</option>
-                            {% for service in services %}
-                                <option value="{{ service.id }}">{{ service.name }} – ${{ service.price }}</option>
-                            {% endfor %}
-                        </select>
+                    <div class="grid grid-cols-2 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="booking_type" value="service" class="peer sr-only" checked>
+                            <div class="py-3 text-center border border-white/10 text-xs sm:text-sm font-semibold tracking-widest uppercase text-light/60 peer-checked:border-primary peer-checked:text-primary peer-checked:bg-primary/10 transition-all">
+                                Single Services
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="booking_type" value="package" class="peer sr-only">
+                            <div class="py-3 text-center border border-white/10 text-xs sm:text-sm font-semibold tracking-widest uppercase text-light/60 peer-checked:border-primary peer-checked:text-primary peer-checked:bg-primary/10 transition-all">
+                                Package
+                            </div>
+                        </label>
                     </div>
                 </div>
 
-                <!-- Date & Time -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label for="date" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Date</label>
-                        <input type="date" name="date" id="date" required
-                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors">
+                <!-- ============ Services panel ============ -->
+                <div id="services-panel">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-xs font-semibold tracking-widest uppercase text-light/60">
+                            Select Services (one or more)
+                        </label>
+                        <button type="button" id="toggle-all-services"
+                                class="text-[11px] font-semibold tracking-widest uppercase text-primary hover:text-light transition-colors">
+                            Select All
+                        </button>
                     </div>
-                    <div>
-                        <label for="time" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Time</label>
-                        <input type="time" name="time" id="time" required
-                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors">
+
+                    {% if services %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {% for service in services %}
+                        <label class="cursor-pointer">
+                            <input type="checkbox" name="service_ids" value="{{ service.id }}"
+                                   data-price="{{ service.price }}"
+                                   class="service-checkbox peer sr-only">
+                            <div class="p-4 border border-white/10 hover:border-primary/50 peer-checked:border-primary peer-checked:bg-primary/5 transition-all h-full flex justify-between items-start gap-3">
+                                <div class="flex items-start gap-3 min-w-0">
+                                    <span class="check-box mt-0.5 w-5 h-5 flex-shrink-0 border border-white/30 flex items-center justify-center transition-colors">
+                                        <svg class="check-icon w-3 h-3 text-dark opacity-0 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </span>
+                                    <span class="font-serif text-base sm:text-lg font-semibold text-light truncate">{{ service.name }}</span>
+                                </div>
+                                <span class="font-serif text-lg font-bold text-primary whitespace-nowrap">
+                                    ${{ "%.0f"|format(service.price) }}
+                                </span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <div class="mt-4 flex justify-between items-center border-t border-white/10 pt-4">
+                        <span class="text-xs font-semibold tracking-widest uppercase text-light/60">
+                            Selected: <span id="selected-count" class="text-primary">0</span>
+                        </span>
+                        <span class="font-serif text-xl sm:text-2xl font-bold text-primary">
+                            Total: $<span id="selected-total">0.00</span>
+                        </span>
+                    </div>
+                    {% else %}
+                    <p class="text-light/40 text-sm">No services available yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- ============ Packages panel ============ -->
+                <div id="packages-panel" class="hidden">
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-3">
+                        Select a Package
+                    </label>
+
+                    {% if packages %}
+                    <div class="space-y-3">
+                        {% for package in packages %}
+                        <label class="cursor-pointer block">
+                            <input type="radio" name="package_id" value="{{ package.id }}"
+                                   data-price="{{ package.price }}"
+                                   class="package-radio peer sr-only">
+                            <div class="p-5 border border-white/10 hover:border-primary/50 peer-checked:border-primary peer-checked:bg-primary/5 transition-all">
+                                <div class="flex justify-between items-start gap-4 mb-3">
+                                    <div class="min-w-0">
+                                        <h3 class="font-serif text-lg sm:text-xl font-semibold text-light">{{ package.name }}</h3>
+                                        {% if package.description %}
+                                        <p class="text-light/50 text-sm mt-1">{{ package.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <span class="font-serif text-xl sm:text-2xl font-bold text-primary whitespace-nowrap">
+                                        ${{ "%.0f"|format(package.price) }}
+                                    </span>
+                                </div>
+                                <div class="flex flex-wrap gap-2 pt-3 border-t border-white/5">
+                                    {% for s in package.services %}
+                                    <span class="text-[11px] tracking-widest uppercase text-light/60 border border-white/10 px-2.5 py-1">
+                                        {{ s.name }}
+                                    </span>
+                                    {% endfor %}
+                                    {% if package.duration %}
+                                    <span class="text-[11px] tracking-widest uppercase text-primary border border-primary/30 px-2.5 py-1">
+                                        ~{{ package.duration }} min
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-light/40 text-sm">No packages available yet.</p>
+                    {% endif %}
+                </div>
+
+                <!-- ============ Customer info ============ -->
+                <div class="pt-6 border-t border-white/5">
+                    <p class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-4">Your Details</p>
+
+                    {% if logged_customer %}
+                        <!-- Logged in notice -->
+                        <div class="flex items-center justify-between gap-3 px-4 py-3 bg-primary/5 border border-primary/20 mb-5">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-9 h-9 flex-none bg-primary/20 border border-primary/40 flex items-center justify-center">
+                                    <span class="font-serif font-bold text-primary text-sm">
+                                        {{ logged_customer.name[0]|upper }}
+                                    </span>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-[11px] tracking-widest uppercase text-light/40">Booking as</div>
+                                    <div class="text-sm font-serif text-light truncate">{{ logged_customer.name }}</div>
+                                </div>
+                            </div>
+                            <form method="POST" action="{{ url_for('customer.logout') }}" class="inline">
+                                <button type="submit"
+                                        class="text-red-400/70 text-[11px] font-bold tracking-widest uppercase hover:text-red-400 transition-colors whitespace-nowrap">
+                                    Switch
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+
+                    <div class="space-y-5">
+                        <div>
+                            <label for="name" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Full Name</label>
+                            <input type="text" name="name" id="name" required
+                                   value="{{ logged_customer.name if logged_customer else '' }}"
+                                   class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
+                                   placeholder="John Doe">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="phone" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Phone</label>
+                                <input type="tel" name="phone" id="phone" required
+                                       value="{{ logged_customer.phone if logged_customer and logged_customer.phone else '' }}"
+                                       class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
+                                       placeholder="+20 123 456 7890">
+                            </div>
+                            <div>
+                                <label for="email" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Email</label>
+                                <input type="email" name="email" id="email" required
+                                       value="{{ logged_customer.email if logged_customer else '' }}"
+                                       {% if logged_customer %}readonly{% endif %}
+                                       class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors {% if logged_customer %}opacity-70 cursor-not-allowed{% endif %}"
+                                       placeholder="john@example.com">
+                                {% if logged_customer %}
+                                    <p class="text-light/30 text-xs mt-2">Email is locked to your account.</p>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Submit -->
-                <div class="pt-4">
+                <!-- ============ Barber & schedule ============ -->
+                <div class="pt-6 border-t border-white/5">
+                    <p class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-4">Barber & Schedule</p>
+
+                    <div class="space-y-5">
+                        <div>
+                            <label for="barber_id" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Barber</label>
+                            <select name="barber_id" id="barber_id" required
+                                    class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors appearance-none">
+                                <option value="" disabled selected>Select a barber</option>
+                                {% for barber in barbers %}
+                                    <option value="{{ barber.id }}">{{ barber.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label for="date" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Date</label>
+                                <input type="date" name="date" id="date" required
+                                       class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors">
+                            </div>
+                            <div>
+                                <label for="time" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Time</label>
+                                <select name="time" id="time" required
+                                        class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors appearance-none">
+                                    <option value="" disabled selected>Select barber & date first</option>
+                                </select>
+                                <p id="slots-hint" class="text-light/40 text-xs mt-2 h-4"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============ Coupon ============ -->
+                <div class="pt-6 border-t border-white/5">
+                    <p class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-4">
+                        Coupon Code (optional)
+                    </p>
+
+                    <div class="flex gap-2">
+                        <input type="text" name="coupon_code" id="coupon_code"
+                               autocomplete="off" spellcheck="false"
+                               class="flex-1 bg-dark border border-white/10 px-4 py-3 text-light font-mono uppercase tracking-wider placeholder-light/30 focus:border-primary transition-colors"
+                               placeholder="SUMMER20">
+                        <button type="button" id="apply-coupon"
+                                class="px-5 sm:px-7 border border-primary text-primary text-xs font-bold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all whitespace-nowrap">
+                            Apply
+                        </button>
+                    </div>
+
+                    <p id="coupon-msg" class="text-xs mt-2 h-4"></p>
+                </div>
+
+                <!-- ============ Summary ============ -->
+                <div id="summary-box" class="bg-dark/50 border border-white/5 p-5 sm:p-6 space-y-3">
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-3">Booking Summary</p>
+
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-light/60">Subtotal</span>
+                        <span class="text-light font-mono">$<span id="summary-subtotal">0.00</span></span>
+                    </div>
+
+                    <div id="discount-row" class="flex justify-between items-center text-sm hidden">
+                        <span class="text-green-400">Discount</span>
+                        <span class="text-green-400 font-mono">– $<span id="summary-discount">0.00</span></span>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-3 border-t border-white/10">
+                        <span class="text-xs font-bold tracking-widest uppercase text-light/60">Total</span>
+                        <span class="font-serif text-2xl font-bold text-primary">
+                            $<span id="summary-total">0.00</span>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- ============ Submit ============ -->
+                <div>
                     <button type="submit"
                             class="w-full py-4 bg-primary text-dark font-bold tracking-widest uppercase text-sm hover:bg-light transition-all duration-300">
                         Confirm Booking
@@ -163,30 +380,248 @@
                 </div>
             </form>
 
-            <!-- Back link -->
+            <!-- Back -->
             <div class="text-center mt-8">
-                <a href="/" class="text-light/40 text-sm hover:text-primary transition-colors">
-                    ← Back to Home
-                </a>
+                <a href="/" class="text-light/40 text-sm hover:text-primary transition-colors">← Back to Home</a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="bg-dark border-t border-white/10 py-8 px-6">
+    <footer class="bg-secondary/30 border-t border-white/10 py-8 px-6">
         <div class="container mx-auto text-center text-light/40 text-sm">
             &copy; 2026 Barber System. All rights reserved.
         </div>
     </footer>
 
-    <!-- Set minimum date to today -->
+    <!-- ============ SCRIPTS ============ -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.getElementById('date');
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.min = today;
-        });
-    </script>
+    document.addEventListener('DOMContentLoaded', function () {
 
+        // ---------- Element refs ----------
+        const dateInput       = document.getElementById('date');
+        const barberSel       = document.getElementById('barber_id');
+        const timeSel         = document.getElementById('time');
+        const slotsHint       = document.getElementById('slots-hint');
+
+        const tabs            = document.querySelectorAll('input[name="booking_type"]');
+        const servicesPanel   = document.getElementById('services-panel');
+        const packagesPanel   = document.getElementById('packages-panel');
+
+        const serviceChecks   = document.querySelectorAll('.service-checkbox');
+        const packageRadios   = document.querySelectorAll('.package-radio');
+        const countEl         = document.getElementById('selected-count');
+        const selectedTotalEl = document.getElementById('selected-total');
+        const toggleAllBtn    = document.getElementById('toggle-all-services');
+
+        const couponInput     = document.getElementById('coupon_code');
+        const couponMsg       = document.getElementById('coupon-msg');
+        const applyCouponBtn  = document.getElementById('apply-coupon');
+
+        const summarySubtotal = document.getElementById('summary-subtotal');
+        const summaryDiscount = document.getElementById('summary-discount');
+        const summaryTotal    = document.getElementById('summary-total');
+        const discountRow     = document.getElementById('discount-row');
+
+        let appliedDiscount = 0;
+        let appliedCouponCode = null;
+
+
+        // ---------- Min date ----------
+        dateInput.min = new Date().toISOString().split('T')[0];
+
+
+        // ---------- Subtotal ----------
+        function getSubtotal() {
+            const type = document.querySelector('input[name="booking_type"]:checked').value;
+
+            if (type === 'package') {
+                const sel = document.querySelector('input[name="package_id"]:checked');
+                if (!sel) return 0;
+                return parseFloat(sel.dataset.price) || 0;
+            }
+
+            let total = 0;
+            serviceChecks.forEach(cb => {
+                if (cb.checked) total += parseFloat(cb.dataset.price) || 0;
+            });
+            return total;
+        }
+
+
+        // ---------- Services total ----------
+        function updateServicesTotal() {
+            let count = 0, total = 0;
+            serviceChecks.forEach(cb => {
+                if (cb.checked) {
+                    count++;
+                    total += parseFloat(cb.dataset.price) || 0;
+                }
+            });
+            if (countEl) countEl.textContent = count;
+            if (selectedTotalEl) selectedTotalEl.textContent = total.toFixed(2);
+
+            if (toggleAllBtn && serviceChecks.length) {
+                const allChecked = Array.from(serviceChecks).every(cb => cb.checked);
+                toggleAllBtn.textContent = allChecked ? 'Clear All' : 'Select All';
+            }
+        }
+
+
+        // ---------- Summary ----------
+        function updateSummary() {
+            const subtotal = getSubtotal();
+            let discount = appliedDiscount;
+            if (discount > subtotal) discount = subtotal;
+
+            const total = Math.max(0, subtotal - discount);
+
+            summarySubtotal.textContent = subtotal.toFixed(2);
+            summaryDiscount.textContent = discount.toFixed(2);
+            summaryTotal.textContent    = total.toFixed(2);
+
+            if (discount > 0) {
+                discountRow.classList.remove('hidden');
+            } else {
+                discountRow.classList.add('hidden');
+            }
+        }
+
+
+        // ---------- Panel toggle ----------
+        function syncPanels() {
+            const type = document.querySelector('input[name="booking_type"]:checked').value;
+
+            if (type === 'package') {
+                servicesPanel.classList.add('hidden');
+                packagesPanel.classList.remove('hidden');
+                serviceChecks.forEach(cb => cb.checked = false);
+                updateServicesTotal();
+            } else {
+                packagesPanel.classList.add('hidden');
+                servicesPanel.classList.remove('hidden');
+                packageRadios.forEach(r => r.checked = false);
+            }
+            updateSummary();
+        }
+
+
+        // ---------- Load slots ----------
+        async function loadSlots() {
+            const barber = barberSel.value;
+            const date   = dateInput.value;
+            if (!barber || !date) return;
+
+            slotsHint.innerHTML = '<span class="spinner"></span> Loading available slots...';
+            timeSel.innerHTML = '<option value="" disabled selected>Loading...</option>';
+
+            try {
+                const res  = await fetch(`/booking/available-slots?barber_id=${barber}&date=${date}&duration=30`);
+                const data = await res.json();
+
+                timeSel.innerHTML = '';
+
+                if (!data.slots || data.slots.length === 0) {
+                    timeSel.innerHTML = '<option value="" disabled selected>No slots available</option>';
+                    slotsHint.textContent = data.reason || 'No slots available for this day.';
+                    return;
+                }
+
+                timeSel.innerHTML = '<option value="" disabled selected>Select a time</option>';
+                data.slots.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    timeSel.appendChild(opt);
+                });
+                slotsHint.textContent = `${data.slots.length} slot(s) available.`;
+            } catch (err) {
+                timeSel.innerHTML = '<option value="" disabled selected>Error loading</option>';
+                slotsHint.textContent = 'Failed to load slots. Please try again.';
+            }
+        }
+
+
+        // ---------- Coupon ----------
+        function applyCoupon() {
+            const code = couponInput.value.trim().toUpperCase();
+
+            if (!code) {
+                couponMsg.textContent = 'Please enter a coupon code.';
+                couponMsg.className = 'text-xs mt-2 h-4 text-red-400';
+                return;
+            }
+
+            appliedDiscount = 0;
+            appliedCouponCode = null;
+
+            couponMsg.innerHTML = '<span class="spinner"></span> Validating coupon...';
+            couponMsg.className = 'text-xs mt-2 h-4 text-light/60';
+
+            fetch(`/booking/validate-coupon?code=${encodeURIComponent(code)}&subtotal=${getSubtotal()}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.valid) {
+                        appliedDiscount = data.discount || 0;
+                        appliedCouponCode = code;
+                        couponMsg.textContent = `✓ Coupon applied — you save $${appliedDiscount.toFixed(2)}`;
+                        couponMsg.className = 'text-xs mt-2 h-4 text-green-400';
+                    } else {
+                        couponMsg.textContent = data.error || 'Coupon is not valid.';
+                        couponMsg.className = 'text-xs mt-2 h-4 text-red-400';
+                    }
+                    updateSummary();
+                })
+                .catch(() => {
+                    appliedCouponCode = code;
+                    couponMsg.textContent = `Coupon "${code}" will be validated when you submit.`;
+                    couponMsg.className = 'text-xs mt-2 h-4 text-light/60';
+                    updateSummary();
+                });
+        }
+
+
+        // ---------- Events ----------
+        tabs.forEach(t => t.addEventListener('change', syncPanels));
+
+        serviceChecks.forEach(cb => cb.addEventListener('change', () => {
+            updateServicesTotal();
+            updateSummary();
+        }));
+
+        packageRadios.forEach(r => r.addEventListener('change', updateSummary));
+
+        if (toggleAllBtn) {
+            toggleAllBtn.addEventListener('click', () => {
+                const allChecked = Array.from(serviceChecks).every(cb => cb.checked);
+                serviceChecks.forEach(cb => cb.checked = !allChecked);
+                updateServicesTotal();
+                updateSummary();
+            });
+        }
+
+        barberSel.addEventListener('change', loadSlots);
+        dateInput.addEventListener('change', loadSlots);
+
+        if (applyCouponBtn) applyCouponBtn.addEventListener('click', applyCoupon);
+        if (couponInput) {
+            couponInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); applyCoupon(); }
+            });
+            couponInput.addEventListener('input', () => {
+                appliedDiscount = 0;
+                appliedCouponCode = null;
+                couponMsg.textContent = '';
+                updateSummary();
+            });
+        }
+
+
+        // ---------- Initial ----------
+        syncPanels();
+        updateServicesTotal();
+        updateSummary();
+    });
+    </script>
 </body>
 </html>

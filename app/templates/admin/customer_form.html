@@ -1,23 +1,135 @@
 {% extends "admin/layout.html" %}
 {% block title %}{% if customer %}Edit Customer{% else %}Add Customer{% endif %}{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">{% if customer %}Edit Customer{% else %}Add Customer{% endif %}</h2>
-<form method="post" class="space-y-4">
-  <div>
-    <label class="block text-sm font-medium mb-1">Name</label>
-    <input type="text" name="name"
-           value="{{ customer.name if customer else '' }}"
-           class="w-full border rounded px-3 py-2" required>
-  </div>
-  <div>
-    <label class="block text-sm font-medium mb-1">Phone</label>
-    <input type="text" name="phone"
-           value="{{ customer.phone if customer else '' }}"
-           class="w-full border rounded px-3 py-2">
-  </div>
-  <div class="text-right">
-    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
-    <a href="{{ url_for('admin.list_customers') }}" class="ml-2 text-gray-600 hover:underline">Cancel</a>
-  </div>
-</form>
+
+<div class="max-w-3xl mx-auto">
+
+    <!-- ============ Header ============ -->
+    <div class="mb-10">
+        <a href="{{ url_for('admin.list_customers') }}"
+           class="inline-flex items-center gap-2 text-light/50 text-xs font-semibold tracking-widest uppercase hover:text-primary transition-colors mb-6">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Customers
+        </a>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+        <h2 class="font-serif text-3xl md:text-5xl font-bold text-light">
+            {{ "Edit" if customer else "New" }} <span class="italic font-light">Customer</span>
+        </h2>
+        <p class="text-light/40 text-sm mt-3 max-w-2xl">
+            {{ "Update this customer's contact info." if customer else "Add a new customer manually. They'll be linked to future bookings by email." }}
+        </p>
+    </div>
+
+    <!-- ============ Flash ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-6 px-5 py-4 border-l-4
+                            {% if category == 'success' %}
+                                border-green-500 bg-green-500/10 text-green-300
+                            {% else %}
+                                border-red-500 bg-red-500/10 text-red-300
+                            {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- ============ Form ============ -->
+    <form action="" method="post" class="space-y-8">
+
+        <section class="bg-secondary/30 border border-white/5 p-8">
+
+            <h3 class="font-serif text-xl font-bold text-light mb-6 pb-4 border-b border-white/5 flex items-center gap-3">
+                <span class="w-8 h-8 flex items-center justify-center border border-primary/40 text-primary text-xs font-bold">01</span>
+                Customer Details
+            </h3>
+
+            <div class="space-y-6">
+
+                <!-- Name -->
+                <div>
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">
+                        Full Name <span class="text-red-400">*</span>
+                    </label>
+                    <input type="text" name="name" required
+                           value="{{ customer.name if customer else '' }}"
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary focus:outline-none transition-colors"
+                           placeholder="e.g. John Doe">
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">
+                        Email
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-light/40 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </span>
+                        <input type="email" name="email"
+                               value="{{ customer.email if customer and customer.email else '' }}"
+                               class="w-full bg-dark border border-white/10 pl-11 pr-4 py-3 text-light focus:border-primary focus:outline-none transition-colors"
+                               placeholder="john@example.com">
+                    </div>
+                    <p class="text-light/30 text-xs mt-2">Used to match customers to their online bookings.</p>
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">
+                        Phone
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-light/40 pointer-events-none">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                        </span>
+                        <input type="tel" name="phone"
+                               value="{{ customer.phone if customer and customer.phone else '' }}"
+                               class="w-full bg-dark border border-white/10 pl-11 pr-4 py-3 text-light font-mono focus:border-primary focus:outline-none transition-colors"
+                               placeholder="+20 123 456 7890">
+                    </div>
+                </div>
+
+                <!-- Summary when editing -->
+                {% if customer %}
+                <div class="pt-6 mt-6 border-t border-white/5">
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-3">Summary</p>
+                    <div class="bg-dark/50 border border-white/5 p-5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] tracking-widest uppercase text-light/40 mb-1">Total Bookings</p>
+                            <p class="text-light/60 text-xs">Appointments made by this customer</p>
+                        </div>
+                        <p class="font-serif text-3xl font-bold text-primary">
+                            {{ customer.bookings|length if customer.bookings else 0 }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </section>
+
+        <!-- ------------------ Actions ------------------ -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <button type="submit"
+                    class="flex-1 py-4 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+                {{ "Update Customer" if customer else "Create Customer" }}
+            </button>
+            <a href="{{ url_for('admin.list_customers') }}"
+               class="px-10 py-4 border border-white/10 text-light/60 text-xs font-bold tracking-widest uppercase hover:border-primary hover:text-primary transition-all text-center">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
+
 {% endblock %}

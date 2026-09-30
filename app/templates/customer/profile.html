@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile – Barber System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: {
+            colors: { primary:'#d4af37', secondary:'#1a1a1a', dark:'#0a0a0a', light:'#f5f5f0' },
+            fontFamily: { sans:['Inter','sans-serif'], serif:['Playfair Display','serif'] }
+        }}}
+    </script>
+    <style>
+        input:focus { outline:none; border-color:#d4af37; box-shadow:0 0 0 1px #d4af37; }
+        input { color-scheme: dark; }
+    </style>
+</head>
+<body class="bg-dark text-light font-sans antialiased min-h-screen">
+
+    <nav class="sticky top-0 z-40 bg-dark/90 backdrop-blur-md border-b border-white/10">
+        <div class="container mx-auto px-5 sm:px-6 py-4 flex justify-between items-center">
+            <a href="/" class="font-serif text-xl sm:text-2xl font-bold text-light">
+                BARBER<span class="text-primary">.</span>
+            </a>
+            <a href="{{ url_for('customer.dashboard') }}"
+               class="text-light/60 hover:text-primary text-xs font-semibold tracking-widest uppercase transition-colors">
+                ← My Bookings
+            </a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-5 sm:px-6 py-10 sm:py-14 max-w-2xl">
+
+        <div class="mb-10">
+            <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">My Account</p>
+            <h1 class="font-serif text-3xl sm:text-5xl font-bold text-light">Profile</h1>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, m in messages %}
+                <div class="mb-6 px-5 py-4 border-l-4 text-sm {% if category=='success' %}border-green-500 bg-green-500/10 text-green-300{% else %}border-red-500 bg-red-500/10 text-red-300{% endif %}">
+                    {{ m }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" class="space-y-6 bg-secondary/30 border border-white/5 p-6 sm:p-8">
+            <div>
+                <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Full Name</label>
+                <input type="text" name="name" value="{{ customer.name }}"
+                       class="w-full bg-dark border border-white/10 px-4 py-3 text-light transition-colors">
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Email</label>
+                <input type="email" value="{{ customer.email }}" disabled
+                       class="w-full bg-dark/50 border border-white/5 px-4 py-3 text-light/40 cursor-not-allowed">
+                <p class="text-light/30 text-xs mt-2">Email can't be changed. Contact us if needed.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Phone</label>
+                <input type="tel" name="phone" value="{{ customer.phone or '' }}"
+                       class="w-full bg-dark border border-white/10 px-4 py-3 text-light transition-colors">
+            </div>
+
+            <div class="pt-6 border-t border-white/5">
+                <p class="text-xs font-bold tracking-widest uppercase text-light/40 mb-4">Change Password (optional)</p>
+
+                <div class="space-y-4">
+                    <input type="password" name="password" minlength="6" placeholder="New password"
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light transition-colors">
+                    <input type="password" name="password_confirm" minlength="6" placeholder="Confirm new password"
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light transition-colors">
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-2">
+                <button type="submit"
+                        class="flex-1 py-3.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all">
+                    Save Changes
+                </button>
+                <a href="{{ url_for('customer.dashboard') }}"
+                   class="px-8 py-3.5 border border-white/10 text-light/60 text-xs font-bold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                    Cancel
+                </a>
+            </div>
+        </form>
+
+    </main>
+
+</body>
+</html>

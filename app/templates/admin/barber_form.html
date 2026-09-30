@@ -1,19 +1,98 @@
 {% extends "admin/layout.html" %}
 {% block title %}{% if barber %}Edit Barber{% else %}Add Barber{% endif %}{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">{% if barber %}Edit Barber{% else %}Add Barber{% endif %}</h2>
-<form action="" method="post" class="space-y-4">
-  <div>
-    <label class="block text-sm font-medium mb-1">Name</label>
-    <input type="text" name="name" value="{{ barber.name if barber else '' }}" class="w-full border rounded px-3 py-2" required>
-  </div>
-  <div>
-    <label class="block text-sm font-medium mb-1">Phone</label>
-    <input type="text" name="phone" value="{{ barber.phone if barber else '' }}" class="w-full border rounded px-3 py-2">
-  </div>
-  <div class="text-right">
-    <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded">Save</button>
-    <a href="{{ url_for('admin.list_barbers') }}" class="ml-2 text-gray-600 hover:underline">Cancel</a>
-  </div>
-</form>
+
+<div class="max-w-3xl mx-auto">
+
+    <!-- ============ Header ============ -->
+    <div class="mb-10">
+        <a href="{{ url_for('admin.list_barbers') }}"
+           class="inline-flex items-center gap-2 text-light/50 text-xs font-semibold tracking-widest uppercase hover:text-primary transition-colors mb-6">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Barbers
+        </a>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+        <h2 class="font-serif text-3xl md:text-5xl font-bold text-light">
+            {{ "Edit" if barber else "New" }} <span class="italic font-light">Barber</span>
+        </h2>
+        <p class="text-light/40 text-sm mt-3 max-w-2xl">
+            {{ "Update this barber's name." if barber else "Add a new barber to your team. They'll appear on the booking page immediately." }}
+        </p>
+    </div>
+
+    <!-- ============ Flash ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="mb-6 px-5 py-4 border-l-4
+                            {% if category == 'success' %}
+                                border-green-500 bg-green-500/10 text-green-300
+                            {% else %}
+                                border-red-500 bg-red-500/10 text-red-300
+                            {% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- ============ Form ============ -->
+    <form action="" method="post" class="space-y-8">
+
+        <section class="bg-secondary/30 border border-white/5 p-8">
+
+            <h3 class="font-serif text-xl font-bold text-light mb-6 pb-4 border-b border-white/5 flex items-center gap-3">
+                <span class="w-8 h-8 flex items-center justify-center border border-primary/40 text-primary text-xs font-bold">01</span>
+                Barber Details
+            </h3>
+
+            <div class="space-y-6">
+
+                <div>
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">
+                        Full Name <span class="text-red-400">*</span>
+                    </label>
+                    <input type="text" name="name" required
+                           value="{{ barber.name if barber else '' }}"
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary focus:outline-none transition-colors"
+                           placeholder="e.g. Ahmed Hassan">
+                    <p class="text-light/30 text-xs mt-2">Shown on the booking page and admin dashboard.</p>
+                </div>
+
+                <!-- Summary when editing -->
+                {% if barber %}
+                <div class="pt-6 mt-6 border-t border-white/5">
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-3">Summary</p>
+                    <div class="bg-dark/50 border border-white/5 p-5 flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] tracking-widest uppercase text-light/40 mb-1">Total Bookings</p>
+                            <p class="text-light/60 text-xs">Total appointments assigned to this barber</p>
+                        </div>
+                        <p class="font-serif text-3xl font-bold text-primary">
+                            {{ barber.bookings.count() if barber.bookings else 0 }}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </section>
+
+        <!-- ------------------ Actions ------------------ -->
+        <div class="flex flex-col sm:flex-row gap-3 pt-2">
+            <button type="submit"
+                    class="flex-1 py-4 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+                {{ "Update Barber" if barber else "Create Barber" }}
+            </button>
+            <a href="{{ url_for('admin.list_barbers') }}"
+               class="px-10 py-4 border border-white/10 text-light/60 text-xs font-bold tracking-widest uppercase hover:border-primary hover:text-primary transition-all text-center">
+                Cancel
+            </a>
+        </div>
+
+    </form>
+</div>
+
 {% endblock %}

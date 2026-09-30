@@ -1,43 +1,268 @@
 {% extends "admin/layout.html" %}
 {% block title %}Services{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">Services</h2>
-<a href="{{ url_for('admin.add_service') }}" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4 inline-block">Add Service</a>
-<table class="min-w-full bg-white border border-gray-200">
-  <thead>
-    <tr>
-      <th class="px-4 py-2 border-b">ID</th>
-      <th class="px-4 py-2 border-b">Name</th>
-      <th class="px-4 py-2 border-b">Price</th>
-      <th class="px-4 py-2 border-b">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for service in pagination.items %}
-    <tr>
-      <td class="px-4 py-2 border-b">{{ service.id }}</td>
-      <td class="px-4 py-2 border-b">{{ service.name }}</td>
-      <td class="px-4 py-2 border-b">${{ "%.2f"|format(service.price) }}</td>
-      <td class="px-4 py-2 border-b">
-        <a href="{{ url_for('admin.edit_service', service_id=service.id) }}" class="text-blue-600 mr-2">Edit</a>
-        <form action="{{ url_for('admin.delete_service', service_id=service.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this service?');">
-          <button type="submit" class="text-red-600">Delete</button>
-        </form>
-      </td>
-    </tr>
-    {% else %}
-    <tr><td colspan="4" class="px-4 py-2 border-b text-center">No services found.</td></tr>
-    {% endfor %}
-  </tbody>
-</table>
 
-<div class="mt-4 flex justify-between">
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.list_services', page=pagination.prev_num) }}" class="text-blue-600">&laquo; Prev</a>
-  {% endif %}
-  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('admin.list_services', page=pagination.next_num) }}" class="text-blue-600">Next &raquo;</a>
-  {% endif %}
+<!-- ============ Page Header ============ -->
+<div class="mb-8 flex justify-between items-end flex-wrap gap-4">
+    <div>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+        <h2 class="font-serif text-3xl md:text-4xl font-bold text-light">
+            Services & Packages
+        </h2>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2">
+        <button type="button" id="tab-services"
+                class="tab-btn px-6 py-2.5 text-xs font-bold tracking-widest uppercase border border-primary text-primary bg-primary/10 transition-all">
+            Services
+        </button>
+        <button type="button" id="tab-packages"
+                class="tab-btn px-6 py-2.5 text-xs font-bold tracking-widest uppercase border border-white/10 text-light/60 hover:border-primary hover:text-primary transition-all">
+            Packages
+        </button>
+    </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- =================== SERVICES PANEL ========================= -->
+<!-- ============================================================ -->
+<div id="panel-services">
+
+    <div class="mb-6 flex justify-between items-center flex-wrap gap-3">
+        <p class="text-light/50 text-sm">Manage individual services offered in your shop.</p>
+        <a href="{{ url_for('admin.add_service') }}"
+           class="px-6 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+            + Add Service
+        </a>
+    </div>
+
+    <div class="bg-secondary/30 border border-white/5 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead>
+                    <tr class="border-b border-white/10">
+                        <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">#</th>
+                        <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Name</th>
+                        <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Price</th>
+                        <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">In Packages</th>
+                        <th class="px-5 py-4 text-right text-[11px] font-bold tracking-widest uppercase text-light/50">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for service in services_pagination.items %}
+                <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                    <td class="px-5 py-4 text-sm text-light/50 font-mono">#{{ service.id }}</td>
+                    <td class="px-5 py-4">
+                        <div class="font-serif text-base text-light">{{ service.name }}</div>
+                    </td>
+                    <td class="px-5 py-4">
+                        <span class="font-serif text-lg font-bold text-primary">${{ "%.2f"|format(service.price) }}</span>
+                    </td>
+                    <td class="px-5 py-4">
+                        {% set pkg_count = service.packages.count() if service.packages else 0 %}
+                        {% if pkg_count %}
+                            <span class="text-[11px] tracking-widest uppercase text-primary border border-primary/30 bg-primary/5 px-2.5 py-1">
+                                {{ pkg_count }} package{{ 's' if pkg_count != 1 }}
+                            </span>
+                        {% else %}
+                            <span class="text-light/30 text-xs">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-5 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="{{ url_for('admin.edit_service', service_id=service.id) }}"
+                               class="px-4 py-1.5 border border-white/10 text-light/70 text-[11px] font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                                Edit
+                            </a>
+                            <form action="{{ url_for('admin.delete_service', service_id=service.id) }}"
+                                  method="post" class="inline"
+                                  onsubmit="return confirm('Delete this service?');">
+                                <button type="submit"
+                                        class="px-4 py-1.5 border border-red-500/30 text-red-400 text-[11px] font-semibold tracking-widest uppercase hover:bg-red-500/10 transition-all">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-5 py-16 text-center">
+                        <p class="text-light/40 text-sm">No services yet.</p>
+                        <a href="{{ url_for('admin.add_service') }}"
+                           class="inline-block mt-4 text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+                            + Add your first service
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Services Pagination -->
+    {% if services_pagination.pages > 1 %}
+    <div class="mt-8 flex justify-between items-center">
+        {% if services_pagination.has_prev %}
+            <a href="{{ url_for('admin.list_services', services_page=services_pagination.prev_num, packages_page=packages_pagination.page) }}"
+               class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                ← Prev
+            </a>
+        {% else %}<span></span>{% endif %}
+
+        <span class="text-light/50 text-xs font-semibold tracking-widest uppercase">
+            Page {{ services_pagination.page }} / {{ services_pagination.pages }}
+        </span>
+
+        {% if services_pagination.has_next %}
+            <a href="{{ url_for('admin.list_services', services_page=services_pagination.next_num, packages_page=packages_pagination.page) }}"
+               class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                Next →
+            </a>
+        {% else %}<span></span>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+
+<!-- ============================================================ -->
+<!-- =================== PACKAGES PANEL ========================= -->
+<!-- ============================================================ -->
+<div id="panel-packages" class="hidden">
+
+    <div class="mb-6 flex justify-between items-center flex-wrap gap-3">
+        <p class="text-light/50 text-sm">Group services into packages with their own pricing.</p>
+        <a href="{{ url_for('admin.add_package') }}"
+           class="px-6 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+            + Add Package
+        </a>
+    </div>
+
+    {% if packages_pagination.items %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {% for package in packages_pagination.items %}
+        <div class="bg-secondary/30 border border-white/5 hover:border-primary/40 transition-all p-6">
+
+            <div class="flex justify-between items-start gap-4 mb-4 pb-4 border-b border-white/5">
+                <div class="flex-1">
+                    <h3 class="font-serif text-2xl font-bold text-light">{{ package.name }}</h3>
+                    {% if package.description %}
+                        <p class="text-light/50 text-sm mt-1">{{ package.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="text-right">
+                    <div class="font-serif text-3xl font-bold text-primary">${{ "%.2f"|format(package.price) }}</div>
+                    {% if package.duration %}
+                        <div class="text-[11px] tracking-widest uppercase text-light/40 mt-1">
+                            ~{{ package.duration }} min
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-2">
+                    Included Services ({{ package.services|length }})
+                </p>
+                {% if package.services %}
+                    <div class="flex flex-wrap gap-1.5">
+                        {% for s in package.services %}
+                            <span class="text-[11px] tracking-wider text-light/70 border border-white/10 px-2.5 py-1">
+                                {{ s.name }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-light/30 text-xs">No services linked.</p>
+                {% endif %}
+            </div>
+
+            <div class="flex justify-end gap-2 pt-4 border-t border-white/5">
+                <a href="{{ url_for('admin.edit_package', package_id=package.id) }}"
+                   class="px-4 py-1.5 border border-white/10 text-light/70 text-[11px] font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                    Edit
+                </a>
+                <form action="{{ url_for('admin.delete_package', package_id=package.id) }}"
+                      method="post" class="inline"
+                      onsubmit="return confirm('Delete this package?');">
+                    <button type="submit"
+                            class="px-4 py-1.5 border border-red-500/30 text-red-400 text-[11px] font-semibold tracking-widest uppercase hover:bg-red-500/10 transition-all">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-secondary/30 border border-white/5 py-20 text-center">
+        <p class="text-light/40 text-sm">No packages yet.</p>
+        <a href="{{ url_for('admin.add_package') }}"
+           class="inline-block mt-4 text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+            + Create your first package
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Packages Pagination -->
+    {% if packages_pagination.pages > 1 %}
+    <div class="mt-8 flex justify-between items-center">
+        {% if packages_pagination.has_prev %}
+            <a href="{{ url_for('admin.list_services', services_page=services_pagination.page, packages_page=packages_pagination.prev_num) }}"
+               class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                ← Prev
+            </a>
+        {% else %}<span></span>{% endif %}
+
+        <span class="text-light/50 text-xs font-semibold tracking-widest uppercase">
+            Page {{ packages_pagination.page }} / {{ packages_pagination.pages }}
+        </span>
+
+        {% if packages_pagination.has_next %}
+            <a href="{{ url_for('admin.list_services', services_page=services_pagination.page, packages_page=packages_pagination.next_num) }}"
+               class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                Next →
+            </a>
+        {% else %}<span></span>{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+
+<!-- ============ Tab switching script ============ -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btnServices   = document.getElementById('tab-services');
+    const btnPackages   = document.getElementById('tab-packages');
+    const panelServices = document.getElementById('panel-services');
+    const panelPackages = document.getElementById('panel-packages');
+
+    function activate(tab) {
+        const active   = 'tab-btn px-6 py-2.5 text-xs font-bold tracking-widest uppercase border border-primary text-primary bg-primary/10 transition-all';
+        const inactive = 'tab-btn px-6 py-2.5 text-xs font-bold tracking-widest uppercase border border-white/10 text-light/60 hover:border-primary hover:text-primary transition-all';
+
+        if (tab === 'services') {
+            panelServices.classList.remove('hidden');
+            panelPackages.classList.add('hidden');
+            btnServices.className = active;
+            btnPackages.className = inactive;
+        } else {
+            panelServices.classList.add('hidden');
+            panelPackages.classList.remove('hidden');
+            btnPackages.className = active;
+            btnServices.className = inactive;
+        }
+        history.replaceState(null, '', '#' + tab);
+    }
+
+    btnServices.addEventListener('click', () => activate('services'));
+    btnPackages.addEventListener('click', () => activate('packages'));
+
+    // Restore from hash
+    if (window.location.hash === '#packages') activate('packages');
+});
+</script>
+
 {% endblock %}

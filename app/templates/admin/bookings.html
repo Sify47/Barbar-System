@@ -1,65 +1,237 @@
 {% extends "admin/layout.html" %}
 {% block title %}Bookings{% endblock %}
 {% block content %}
-<h2 class="text-2xl font-semibold mb-4">Bookings</h2>
-<form class="mb-4 flex space-x-4 items-center" method="get" action="{{ url_for('admin.list_bookings') }}">
-  <div>
-    <label class="block text-sm font-medium mb-1">Status</label>
-    <select name="status" class="border rounded px-2 py-1">
-      <option value="" {% if not status %}selected{% endif %}>All</option>
-      <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
-      <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>Confirmed</option>
-      <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
-    </select>
-  </div>
-  <div>
-    <label class="block text-sm font-medium mb-1">Barber ID</label>
-    <input type="number" name="barber_id" value="{{ barber_id or '' }}" class="border rounded px-2 py-1">
-  </div>
-  <button type="submit" class="bg-indigo-600 text-white px-4 py-1 rounded">Filter</button>
-  <a href="{{ url_for('admin.list_bookings') }}" class="text-gray-600 hover:underline">Clear</a>
-</form>
-<table class="min-w-full bg-white border border-gray-200">
-  <thead>
-    <tr>
-      <th class="px-4 py-2 border-b">ID</th>
-      <th class="px-4 py-2 border-b">Customer</th>
-      <th class="px-4 py-2 border-b">Barber</th>
-      <th class="px-4 py-2 border-b">Service</th>
-      <th class="px-4 py-2 border-b">Date</th>
-      <th class="px-4 py-2 border-b">Status</th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for booking in pagination.items %}
-  <tr>
-    <td class="px-4 py-2 border-b">{{ booking.id }}</td>
-    <td class="px-4 py-2 border-b">{{ booking.customer.name if booking.customer else '' }}</td>
-    <td class="px-4 py-2 border-b">{{ booking.barber.name if booking.barber else '' }}</td>
-    <td class="px-4 py-2 border-b">{{ booking.service.name if booking.service else '' }}</td>
-    <td class="px-4 py-2 border-b">
-        {% if booking.date %}
-          {{ booking.date.strftime('%Y-%m-%d') }}
-        {% endif %}
-        {% if booking.time %}
-          at {{ booking.time.strftime('%H:%M') }}
-        {% endif %}
-    </td>
-    <td class="px-4 py-2 border-b">{{ booking.status }}</td>
-  </tr>
-  {% else %}
-  <tr><td colspan="6" class="px-4 py-2 border-b text-center">No bookings found.</td></tr>
-  {% endfor %}
-</tbody>
 
-</table>
-<div class="mt-4 flex justify-between">
-  {% if pagination.has_prev %}
-    <a href="{{ url_for('admin.list_bookings', page=pagination.prev_num, status=status, barber_id=barber_id) }}" class="text-blue-600">&laquo; Prev</a>
-  {% endif %}
-  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
-  {% if pagination.has_next %}
-    <a href="{{ url_for('admin.list_bookings', page=pagination.next_num, status=status, barber_id=barber_id) }}" class="text-blue-600">Next &raquo;</a>
-  {% endif %}
+<div class="mb-8">
+    <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+    <h2 class="font-serif text-3xl md:text-4xl font-bold text-light">
+        Bookings
+    </h2>
 </div>
+
+<!-- ============ Filter Bar ============ -->
+<form class="mb-8 flex flex-wrap gap-4 items-end bg-secondary/30 border border-white/5 p-5"
+      method="get" action="{{ url_for('admin.list_bookings') }}">
+
+    <div>
+        <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Status</label>
+        <select name="status"
+                class="bg-dark border border-white/10 px-4 py-2.5 text-light text-sm focus:border-primary focus:outline-none transition-colors appearance-none min-w-[160px]">
+            <option value="" {% if not status %}selected{% endif %}>All Statuses</option>
+            <option value="pending"   {% if status == 'pending' %}selected{% endif %}>Pending</option>
+            <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+            <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        </select>
+    </div>
+
+    <div>
+        <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Barber</label>
+        <select name="barber_id"
+                class="bg-dark border border-white/10 px-4 py-2.5 text-light text-sm focus:border-primary focus:outline-none transition-colors appearance-none min-w-[180px]">
+            <option value="">All Barbers</option>
+            {% for b in barbers %}
+                <option value="{{ b.id }}" {% if barber_id == b.id %}selected{% endif %}>
+                    {{ b.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <button type="submit"
+            class="px-6 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+        Filter
+    </button>
+
+    <a href="{{ url_for('admin.list_bookings') }}"
+       class="px-6 py-2.5 border border-white/10 text-light/60 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all duration-300">
+        Clear
+    </a>
+</form>
+
+<!-- ============ Bookings Table ============ -->
+<div class="bg-secondary/30 border border-white/5 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead>
+                <tr class="border-b border-white/10">
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">#</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Customer</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Barber</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Services / Package</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Date & Time</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Total</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Status</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Payment</th>
+                    <th class="px-5 py-4 text-right text-[11px] font-bold tracking-widest uppercase text-light/50">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for booking in pagination.items %}
+            <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+
+                <!-- ID (clickable) -->
+                <td class="px-5 py-4 text-sm font-mono">
+                    <a href="{{ url_for('admin.booking_detail', booking_id=booking.id) }}"
+                       class="text-light/50 hover:text-primary transition-colors">
+                        #{{ booking.id }}
+                    </a>
+                </td>
+
+                <!-- Customer (clickable) -->
+                <td class="px-5 py-4">
+                    {% if booking.customer %}
+                        <a href="{{ url_for('admin.customer_detail', customer_id=booking.customer.id) }}"
+                           class="group block">
+                            <div class="flex items-center gap-2">
+                                <div class="w-8 h-8 flex-none border border-primary/30 bg-primary/5 flex items-center justify-center">
+                                    <span class="font-serif font-bold text-primary text-xs">
+                                        {{ booking.customer.name[0]|upper if booking.customer.name else '?' }}
+                                    </span>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-sm font-medium text-light group-hover:text-primary transition-colors truncate">
+                                        {{ booking.customer.name }}
+                                    </div>
+                                    <div class="text-xs text-light/40 truncate">
+                                        {{ booking.customer.phone or booking.customer.email or '' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    {% else %}
+                        <span class="text-light/30 text-sm">—</span>
+                    {% endif %}
+                </td>
+
+                <!-- Barber -->
+                <td class="px-5 py-4 text-sm text-light/80">
+                    {{ booking.barber.name if booking.barber else '—' }}
+                </td>
+
+                <!-- Services / Package -->
+                <td class="px-5 py-4">
+                    {% if booking.package %}
+                        <div class="inline-flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-primary border border-primary/40 px-2 py-0.5">
+                                Package
+                            </span>
+                        </div>
+                        <div class="font-serif text-base text-light">{{ booking.package.name }}</div>
+                        {% if booking.package.services %}
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                {% for s in booking.package.services %}
+                                    <span class="text-[10px] tracking-wider uppercase text-light/50 border border-white/10 px-2 py-0.5">
+                                        {{ s.name }}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% elif booking.services %}
+                        <div class="inline-flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-light/50 border border-white/10 px-2 py-0.5">
+                                Services ({{ booking.services|length }})
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-1">
+                            {% for s in booking.services %}
+                                <span class="text-[11px] tracking-wider text-light/80 border border-white/10 px-2 py-0.5">
+                                    {{ s.name }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <span class="text-light/30 text-sm">—</span>
+                    {% endif %}
+                </td>
+
+                <!-- Date & Time -->
+                <td class="px-5 py-4">
+                    {% if booking.date %}
+                        <div class="text-sm text-light">{{ booking.date.strftime('%b %d, %Y') }}</div>
+                    {% endif %}
+                    {% if booking.time %}
+                        <div class="text-xs text-light/50 mt-0.5 font-mono">{{ booking.time.strftime('%H:%M') }}</div>
+                    {% endif %}
+                </td>
+
+                <!-- Total -->
+                <td class="px-5 py-4">
+                    <span class="font-serif text-lg font-bold text-primary">
+                        ${{ "%.2f"|format(booking.compute_total()) }}
+                    </span>
+                </td>
+
+                <!-- Status -->
+                <td class="px-5 py-4">
+                    {% set st = booking.status|lower %}
+                    {% if st == 'confirmed' %}
+                        <span class="inline-block text-[11px] font-bold tracking-widest uppercase text-green-400 border border-green-400/30 bg-green-400/10 px-2.5 py-1">
+                            {{ booking.status }}
+                        </span>
+                    {% elif st == 'cancelled' %}
+                        <span class="inline-block text-[11px] font-bold tracking-widest uppercase text-red-400 border border-red-400/30 bg-red-400/10 px-2.5 py-1">
+                            {{ booking.status }}
+                        </span>
+                    {% else %}
+                        <span class="inline-block text-[11px] font-bold tracking-widest uppercase text-primary border border-primary/30 bg-primary/10 px-2.5 py-1">
+                            {{ booking.status }}
+                        </span>
+                    {% endif %}
+                </td>
+
+                <!-- Payment -->
+                <td class="px-5 py-4">
+                    {% set ps = booking.payment_status|lower %}
+                    {% if ps == 'paid' %}
+                        <span class="text-[11px] font-bold tracking-widest uppercase text-green-400">Paid</span>
+                    {% else %}
+                        <span class="text-[11px] font-bold tracking-widest uppercase text-light/40">Unpaid</span>
+                    {% endif %}
+                </td>
+
+                <!-- Actions -->
+                <td class="px-5 py-4 text-right">
+                    <div class="flex justify-end">
+                        <a href="{{ url_for('admin.booking_detail', booking_id=booking.id) }}"
+                           class="px-4 py-1.5 border border-white/10 text-light/70 text-[11px] font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                            View
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="px-5 py-16 text-center">
+                    <p class="text-light/40 text-sm">No bookings found.</p>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============ Pagination ============ -->
+{% if pagination.pages > 1 %}
+<div class="mt-8 flex justify-between items-center">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('admin.list_bookings', page=pagination.prev_num, status=status, barber_id=barber_id) }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            ← Prev
+        </a>
+    {% else %}<span></span>{% endif %}
+
+    <span class="text-light/50 text-xs font-semibold tracking-widest uppercase">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('admin.list_bookings', page=pagination.next_num, status=status, barber_id=barber_id) }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            Next →
+        </a>
+    {% else %}<span></span>{% endif %}
+</div>
+{% endif %}
+
 {% endblock %}

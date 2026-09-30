@@ -1,11 +1,513 @@
 {% extends "admin/layout.html" %}
-{% block title %}Admin Dashboard{% endblock %}
+{% block title %}Dashboard{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-semibold mb-4">Admin Dashboard</h1>
-<p>Welcome, {{ current_user.username }}!</p>
-<ul class="space-y-2">
-    <li><a href="{{ url_for('admin.list_barbers') }}" class="text-blue-600 hover:underline">Manage Barbers</a></li>
-    <li><a href="{{ url_for('admin.list_services') }}" class="text-blue-600 hover:underline">Manage Services</a></li>
-    <li><a href="{{ url_for('admin.list_bookings') }}" class="text-blue-600 hover:underline">View Bookings</a></li>
-</ul>
+
+<!-- ============================================================ -->
+<!-- HEADER -->
+<!-- ============================================================ -->
+<div class="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+        <h1 class="font-serif text-3xl md:text-4xl font-bold text-light">
+            Welcome, <span class="italic font-light">{{ current_user.username }}</span>
+        </h1>
+        <p class="text-light/40 text-sm mt-2">
+            Here's what's happening with your shop today —
+            <span class="text-light/60">{{ today_bookings }} appointment{{ 's' if today_bookings != 1 }} scheduled.</span>
+        </p>
+    </div>
+
+    <div class="flex gap-3">
+        <a href="{{ url_for('admin.list_bookings') }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            All Bookings
+        </a>
+        <a href="{{ url_for('admin.list_barbers') }}"
+           class="px-5 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all">
+            + New Booking
+        </a>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- KPI CARDS -->
+<!-- ============================================================ -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+    <!-- Today's revenue -->
+    <div class="bg-primary/10 border border-primary/30 p-5 sm:p-6">
+        <div class="flex items-start justify-between mb-3">
+            <p class="text-[11px] font-bold tracking-widest uppercase text-primary/80">Today's Revenue</p>
+            <svg class="w-5 h-5 text-primary/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+            </svg>
+        </div>
+        <p class="font-serif text-3xl sm:text-4xl font-bold text-primary">${{ "%.0f"|format(today_revenue) }}</p>
+        <p class="text-xs text-light/40 mt-1">{{ today_bookings }} booking{{ 's' if today_bookings != 1 }}</p>
+    </div>
+
+    <!-- This month -->
+    <div class="bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <div class="flex items-start justify-between mb-3">
+            <p class="text-[11px] font-bold tracking-widest uppercase text-light/40">This Month</p>
+            <svg class="w-5 h-5 text-light/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <p class="font-serif text-3xl sm:text-4xl font-bold text-light">${{ "%.0f"|format(month_revenue) }}</p>
+        <p class="text-xs text-light/40 mt-1">{{ month_bookings }} booking{{ 's' if month_bookings != 1 }}</p>
+    </div>
+
+    <!-- Customers -->
+    <div class="bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <div class="flex items-start justify-between mb-3">
+            <p class="text-[11px] font-bold tracking-widest uppercase text-light/40">Customers</p>
+            <svg class="w-5 h-5 text-light/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+        </div>
+        <p class="font-serif text-3xl sm:text-4xl font-bold text-light">{{ total_customers }}</p>
+        {% if new_customers_week > 0 %}
+            <p class="text-xs text-green-400 mt-1">+{{ new_customers_week }} this week</p>
+        {% else %}
+            <p class="text-xs text-light/40 mt-1">all time</p>
+        {% endif %}
+    </div>
+
+    <!-- Pending -->
+    <div class="bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <div class="flex items-start justify-between mb-3">
+            <p class="text-[11px] font-bold tracking-widest uppercase text-light/40">Pending</p>
+            <svg class="w-5 h-5 text-light/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <p class="font-serif text-3xl sm:text-4xl font-bold text-light">{{ pending_count }}</p>
+        {% if pending_count > 0 %}
+            <a href="{{ url_for('admin.list_bookings', status='pending') }}"
+               class="text-xs text-primary hover:text-light transition-colors mt-1 inline-block">
+                Review now →
+            </a>
+        {% else %}
+            <p class="text-xs text-light/40 mt-1">all caught up</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- CHARTS -->
+<!-- ============================================================ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- Revenue chart (spans 2 cols) -->
+    <div class="lg:col-span-2 bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Revenue Trend</p>
+                <p class="font-serif text-xl text-light">Last 14 Days</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[11px] tracking-widest uppercase text-light/40">Total</p>
+                <p class="font-serif text-lg font-bold text-primary">
+                    ${{ "%.0f"|format(revenue_data|sum) }}
+                </p>
+            </div>
+        </div>
+        <div class="h-64">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Status donut -->
+    <div class="bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Status Breakdown</p>
+        <p class="font-serif text-xl text-light mb-4">All Time</p>
+
+        <div class="h-48 mb-4">
+            <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="space-y-2 pt-4 border-t border-white/5">
+            <div class="flex justify-between items-center text-xs">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-primary"></span>
+                    <span class="text-light/60">Pending</span>
+                </span>
+                <span class="text-light font-semibold">{{ pending_count }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-green-400"></span>
+                    <span class="text-light/60">Confirmed</span>
+                </span>
+                <span class="text-light font-semibold">{{ confirmed_count }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                    <span class="text-light/60">Completed</span>
+                </span>
+                <span class="text-light font-semibold">{{ completed_count }}</span>
+            </div>
+            <div class="flex justify-between items-center text-xs">
+                <span class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span class="text-light/60">Cancelled</span>
+                </span>
+                <span class="text-light font-semibold">{{ cancelled_count }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- RECENT BOOKINGS + TODAY'S SCHEDULE -->
+<!-- ============================================================ -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+    <!-- Recent bookings (2 cols) -->
+    <div class="lg:col-span-2 bg-secondary/30 border border-white/5 overflow-hidden">
+        <div class="px-5 sm:px-6 py-5 border-b border-white/5 flex justify-between items-center">
+            <div>
+                <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Latest Activity</p>
+                <p class="font-serif text-xl text-light">Recent Bookings</p>
+            </div>
+            <a href="{{ url_for('admin.list_bookings') }}"
+               class="text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+                View All →
+            </a>
+        </div>
+
+        {% if recent_bookings %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <tbody>
+                {% for b in recent_bookings %}
+                <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors last:border-0">
+                    <td class="px-5 py-4">
+                        <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}"
+                           class="font-mono text-xs text-light/40 hover:text-primary">#{{ b.id }}</a>
+                    </td>
+
+                    <td class="px-5 py-4">
+                        {% if b.customer %}
+                            <a href="{{ url_for('admin.customer_detail', customer_id=b.customer.id) }}"
+                               class="group flex items-center gap-2 min-w-0">
+                                <div class="w-8 h-8 flex-none border border-primary/30 bg-primary/5 flex items-center justify-center">
+                                    <span class="font-serif font-bold text-primary text-xs">
+                                        {{ b.customer.name[0]|upper }}
+                                    </span>
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-sm text-light group-hover:text-primary transition-colors truncate">
+                                        {{ b.customer.name }}
+                                    </div>
+                                    <div class="text-[11px] text-light/40">
+                                        {{ b.date.strftime('%b %d') if b.date else '' }}
+                                        · {{ b.time.strftime('%H:%M') if b.time else '' }}
+                                    </div>
+                                </div>
+                            </a>
+                        {% else %}
+                            <span class="text-light/30 text-xs">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="px-5 py-4 text-xs text-light/60">
+                        {{ b.barber.name if b.barber else '—' }}
+                    </td>
+
+                    <td class="px-5 py-4">
+                        <span class="font-serif text-sm font-bold text-primary">
+                            ${{ "%.0f"|format(b.compute_total()) }}
+                        </span>
+                    </td>
+
+                    <td class="px-5 py-4 text-right">
+                        {% set st = b.status|lower %}
+                        {% if st == 'confirmed' %}
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-green-400">Confirmed</span>
+                        {% elif st == 'completed' %}
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-blue-400">Completed</span>
+                        {% elif st == 'cancelled' %}
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-red-400">Cancelled</span>
+                        {% else %}
+                            <span class="text-[10px] font-bold tracking-widest uppercase text-primary">Pending</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="py-16 text-center">
+            <p class="text-light/40 text-sm">No bookings yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Today's schedule -->
+    <div class="bg-secondary/30 border border-white/5 overflow-hidden">
+        <div class="px-5 sm:px-6 py-5 border-b border-white/5">
+            <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Today</p>
+            <p class="font-serif text-xl text-light">
+                {{ todays_schedule|length }} Appointment{{ 's' if todays_schedule|length != 1 }}
+            </p>
+        </div>
+
+        {% if todays_schedule %}
+        <div class="divide-y divide-white/5 max-h-96 overflow-y-auto">
+            {% for b in todays_schedule %}
+            <a href="{{ url_for('admin.booking_detail', booking_id=b.id) }}"
+               class="block px-5 py-4 hover:bg-white/[0.02] transition-colors">
+                <div class="flex items-start gap-3">
+                    <div class="flex-none text-center">
+                        <div class="font-mono text-sm font-bold text-primary">
+                            {{ b.time.strftime('%H:%M') if b.time else '—' }}
+                        </div>
+                        <div class="text-[10px] text-light/40 mt-0.5">
+                            {{ b.duration_minutes or 30 }}m
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm text-light truncate">
+                            {{ b.customer.name if b.customer else 'Guest' }}
+                        </div>
+                        <div class="text-[11px] text-light/40 truncate mt-0.5">
+                            {% if b.package %}
+                                {{ b.package.name }}
+                            {% elif b.services %}
+                                {% for s in b.services %}{{ s.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="py-16 text-center">
+            <p class="text-light/40 text-sm">No appointments today.</p>
+            <p class="text-light/30 text-xs mt-2">Enjoy the quiet ✨</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- TOP BARBERS + POPULAR SERVICES -->
+<!-- ============================================================ -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- Top barbers -->
+    <div class="bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+            <div>
+                <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Performance</p>
+                <p class="font-serif text-xl text-light">Top Barbers</p>
+            </div>
+            <a href="{{ url_for('admin.list_barbers') }}"
+               class="text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+                View All →
+            </a>
+        </div>
+
+        {% if top_barbers %}
+        {% set max_count = top_barbers[0][2] if top_barbers else 1 %}
+        <div class="space-y-4">
+            {% for b in top_barbers %}
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-8 h-8 flex-none border border-primary/30 bg-primary/5 flex items-center justify-center">
+                            <span class="font-serif font-bold text-primary text-xs">
+                                {{ b.name[0]|upper }}
+                            </span>
+                        </div>
+                        <span class="text-sm text-light truncate">{{ b.name }}</span>
+                    </div>
+                    <span class="text-xs font-mono text-light/60 whitespace-nowrap ml-3">
+                        {{ b.booking_count }} bookings
+                    </span>
+                </div>
+                <div class="h-1.5 bg-dark/50 overflow-hidden">
+                    <div class="h-full bg-primary"
+                         style="width: {{ (b.booking_count / max_count * 100)|round(1) }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-light/40 text-sm text-center py-8">No data yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Popular services -->
+    <div class="bg-secondary/30 border border-white/5 p-5 sm:p-6">
+        <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
+            <div>
+                <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Demand</p>
+                <p class="font-serif text-xl text-light">Popular Services</p>
+            </div>
+            <a href="{{ url_for('admin.list_services') }}"
+               class="text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+                View All →
+            </a>
+        </div>
+
+        {% if popular_services %}
+        {% set max_use = popular_services[0][2] if popular_services else 1 %}
+        <div class="space-y-4">
+            {% for s in popular_services %}
+            <div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-sm text-light truncate">{{ s.name }}</span>
+                    <span class="text-xs font-mono text-light/60 whitespace-nowrap ml-3">
+                        {{ s.use_count }}× booked
+                    </span>
+                </div>
+                <div class="h-1.5 bg-dark/50 overflow-hidden">
+                    <div class="h-full bg-primary/70"
+                         style="width: {{ (s.use_count / max_use * 100)|round(1) }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-light/40 text-sm text-center py-8">No data yet.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- ============================================================ -->
+<!-- CHART.JS -->
+<!-- ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // ---------- Global defaults ----------
+    Chart.defaults.color = 'rgba(245, 245, 240, 0.5)';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 11;
+
+    const gridColor = 'rgba(255, 255, 255, 0.05)';
+    const primary   = '#d4af37';
+
+    // ---------- Revenue chart ----------
+    const revCtx = document.getElementById('revenueChart');
+    if (revCtx) {
+        new Chart(revCtx, {
+            type: 'line',
+            data: {
+                labels: {{ revenue_labels|tojson }},
+                datasets: [{
+                    label: 'Revenue',
+                    data: {{ revenue_data|tojson }},
+                    borderColor: primary,
+                    backgroundColor: (ctx) => {
+                        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 260);
+                        g.addColorStop(0, 'rgba(212, 175, 55, 0.30)');
+                        g.addColorStop(1, 'rgba(212, 175, 55, 0)');
+                        return g;
+                    },
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 3,
+                    pointBackgroundColor: primary,
+                    pointBorderColor: '#0a0a0a',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#1a1a1a',
+                        borderColor: primary,
+                        borderWidth: 1,
+                        titleColor: '#f5f5f0',
+                        bodyColor: '#f5f5f0',
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: (ctx) => '$' + Number(ctx.parsed.y).toFixed(0)
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 7 }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: {
+                            callback: (v) => '$' + v,
+                            stepSize: null
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ---------- Status donut ----------
+    const stCtx = document.getElementById('statusChart');
+    if (stCtx) {
+        const statusData = [
+            {{ pending_count }},
+            {{ confirmed_count }},
+            {{ completed_count }},
+            {{ cancelled_count }},
+        ];
+
+        // Hide entirely if no data
+        if (statusData.every(v => v === 0)) {
+            stCtx.parentElement.innerHTML =
+                '<div class="h-full flex items-center justify-center text-light/30 text-xs">No data yet</div>';
+        } else {
+            new Chart(stCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Confirmed', 'Completed', 'Cancelled'],
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: [primary, '#4ade80', '#60a5fa', '#f87171'],
+                        borderColor: '#0a0a0a',
+                        borderWidth: 3,
+                        hoverOffset: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            borderColor: primary,
+                            borderWidth: 1,
+                            titleColor: '#f5f5f0',
+                            bodyColor: '#f5f5f0',
+                            padding: 10,
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+</script>
+
 {% endblock %}

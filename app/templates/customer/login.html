@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login – Barber System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = { theme: { extend: {
+            colors: { primary:'#d4af37', secondary:'#1a1a1a', dark:'#0a0a0a', light:'#f5f5f0' },
+            fontFamily: { sans:['Inter','sans-serif'], serif:['Playfair Display','serif'] }
+        }}}
+    </script>
+    <style>
+        input:focus { outline:none; border-color:#d4af37; box-shadow:0 0 0 1px #d4af37; }
+        input { color-scheme: dark; }
+    </style>
+</head>
+<body class="bg-dark text-light font-sans antialiased min-h-screen flex items-center justify-center px-5 py-16">
+
+    <div class="w-full max-w-md">
+
+        <!-- Brand -->
+        <div class="text-center mb-8">
+            <a href="/" class="font-serif text-3xl font-bold tracking-wide text-light">
+                BARBER<span class="text-primary">.</span>
+            </a>
+            <p class="text-[10px] tracking-[0.3em] uppercase text-light/40 mt-2">Client Account</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-secondary/30 border border-white/5 p-8">
+
+            <div class="text-center mb-8">
+                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Welcome Back</p>
+                <h1 class="font-serif text-3xl font-bold text-light">Log In</h1>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, m in messages %}
+                    <div class="mb-6 px-4 py-3 border-l-4 text-sm {% if category=='success' %}border-green-500 bg-green-500/10 text-green-300{% else %}border-red-500 bg-red-500/10 text-red-300{% endif %}">
+                        {{ m }}
+                    </div>
+                {% endfor %}
+            {% endwith %}
+
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Email</label>
+                    <input type="email" name="email" required value="{{ email or '' }}"
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light transition-colors"
+                           placeholder="you@example.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Password</label>
+                    <input type="password" name="password" required
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light transition-colors"
+                           placeholder="••••••••">
+                </div>
+
+                <button type="submit"
+                        class="w-full py-4 bg-primary text-dark font-bold tracking-widest uppercase text-sm hover:bg-light transition-all">
+                    Log In
+                </button>
+            </form>
+
+            <div class="mt-6 pt-6 border-t border-white/5 text-center text-sm text-light/50">
+                Don't have an account?
+                <a href="{{ url_for('customer.register') }}"
+                   class="text-primary hover:text-light transition-colors ml-1 font-semibold">
+                    Create one
+                </a>
+            </div>
+        </div>
+
+        <div class="text-center mt-6">
+            <a href="/" class="text-light/40 text-xs hover:text-primary transition-colors">← Back to Home</a>
+        </div>
+    </div>
+
+</body>
+</html>

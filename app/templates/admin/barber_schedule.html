@@ -1,0 +1,155 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ barber.name }} – Schedule{% endblock %}
+{% block content %}
+
+<div class="max-w-4xl mx-auto">
+
+    <!-- ============ Header ============ -->
+    <div class="mb-10">
+        <a href="{{ url_for('admin.list_barbers') }}"
+           class="inline-flex items-center gap-2 text-light/50 text-xs font-semibold tracking-widest uppercase hover:text-primary mb-6 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Barbers
+        </a>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Schedule</p>
+        <h2 class="font-serif text-3xl md:text-5xl font-bold text-light">
+            {{ barber.name }}
+        </h2>
+        <p class="text-light/40 text-sm mt-3">Set working hours and days off.</p>
+    </div>
+
+    <!-- ============ Flash ============ -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, m in messages %}
+                <div class="mb-6 px-5 py-4 border-l-4 {% if category == 'success' %}border-green-500 bg-green-500/10 text-green-300{% else %}border-red-500 bg-red-500/10 text-red-300{% endif %}">
+                    {{ m }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- ============ Weekly Hours ============ -->
+    <form method="POST" class="space-y-8">
+        <section class="bg-secondary/30 border border-white/5 p-6 sm:p-8">
+
+            <h3 class="font-serif text-xl font-bold text-light mb-6 pb-4 border-b border-white/5 flex items-center gap-3">
+                <span class="w-8 h-8 flex items-center justify-center border border-primary/40 text-primary text-xs font-bold">01</span>
+                Weekly Hours
+            </h3>
+
+            <div class="space-y-2">
+                {% for day in weekdays %}
+                {% set idx = loop.index0 %}
+                {% set sched = barber.schedules|selectattr("day_of_week", "equalto", idx)|first %}
+
+                <div class="grid grid-cols-12 gap-3 items-center py-3 border-b border-white/5 last:border-0">
+                    <!-- Day -->
+                    <div class="col-span-12 sm:col-span-3 text-sm font-medium text-light">
+                        {{ day }}
+                    </div>
+
+                    <!-- Closed -->
+                    <div class="col-span-6 sm:col-span-2">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs text-light/60">
+                            <input type="checkbox" name="closed_{{ idx }}"
+                                   {% if sched and sched.is_closed %}checked{% endif %}
+                                   class="accent-primary">
+                            Closed
+                        </label>
+                    </div>
+
+                    <!-- Open time -->
+                    <div class="col-span-6 sm:col-span-3">
+                        <input type="time" name="open_{{ idx }}"
+                               value="{{ sched.open_time.strftime('%H:%M') if sched and sched.open_time else '10:00' }}"
+                               class="w-full bg-dark border border-white/10 px-3 py-2 text-light text-sm focus:border-primary focus:outline-none transition-colors">
+                    </div>
+
+                    <div class="col-span-12 sm:col-span-1 text-center text-light/40 hidden sm:block">–</div>
+
+                    <!-- Close time -->
+                    <div class="col-span-6 sm:col-span-3">
+                        <input type="time" name="close_{{ idx }}"
+                               value="{{ sched.close_time.strftime('%H:%M') if sched and sched.close_time else '22:00' }}"
+                               class="w-full bg-dark border border-white/10 px-3 py-2 text-light text-sm focus:border-primary focus:outline-none transition-colors">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button type="submit"
+                        class="px-8 py-3 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all">
+                    Save Schedule
+                </button>
+            </div>
+        </section>
+    </form>
+
+    <!-- ============ Time Off ============ -->
+    <section class="bg-secondary/30 border border-white/5 p-6 sm:p-8 mt-8">
+
+        <h3 class="font-serif text-xl font-bold text-light mb-6 pb-4 border-b border-white/5 flex items-center gap-3">
+            <span class="w-8 h-8 flex items-center justify-center border border-primary/40 text-primary text-xs font-bold">02</span>
+            Time Off
+        </h3>
+
+        <!-- Add form -->
+        <form method="POST" action="{{ url_for('admin.add_time_off', barber_id=barber.id) }}"
+              class="grid grid-cols-1 sm:grid-cols-5 gap-3 mb-6 pb-6 border-b border-white/5">
+
+            <input type="date" name="date" required
+                   class="bg-dark border border-white/10 px-3 py-2.5 text-light text-sm focus:border-primary focus:outline-none transition-colors">
+
+            <label class="flex items-center gap-2 text-xs text-light/60 px-2">
+                <input type="checkbox" name="all_day" checked class="accent-primary">
+                All day
+            </label>
+
+            <input type="time" name="start_time" value="10:00"
+                   class="bg-dark border border-white/10 px-3 py-2.5 text-light text-sm focus:border-primary focus:outline-none transition-colors">
+            <input type="time" name="end_time" value="14:00"
+                   class="bg-dark border border-white/10 px-3 py-2.5 text-light text-sm focus:border-primary focus:outline-none transition-colors">
+
+            <button type="submit"
+                    class="px-4 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all">
+                Add
+            </button>
+        </form>
+
+        <!-- Existing off days -->
+        {% if barber.time_off %}
+        <div class="space-y-2">
+            {% for t in barber.time_off|sort(attribute='date') %}
+            <div class="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="font-mono text-sm text-light">{{ t.date.strftime('%b %d, %Y') }}</span>
+                    {% if t.all_day %}
+                        <span class="text-[11px] tracking-widest uppercase text-primary border border-primary/30 px-2 py-0.5">All Day</span>
+                    {% else %}
+                        <span class="text-xs text-light/50 font-mono">
+                            {{ t.start_time.strftime('%H:%M') }} – {{ t.end_time.strftime('%H:%M') }}
+                        </span>
+                    {% endif %}
+                    {% if t.reason %}
+                        <span class="text-xs text-light/40">· {{ t.reason }}</span>
+                    {% endif %}
+                </div>
+                <form method="POST" action="{{ url_for('admin.delete_time_off', off_id=t.id) }}"
+                      onsubmit="return confirm('Remove this time off?');">
+                    <button class="text-red-400 text-xs hover:text-red-300 transition-colors">Remove</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-light/40 text-sm text-center py-6">No days off scheduled.</p>
+        {% endif %}
+    </section>
+
+</div>
+
+{% endblock %}

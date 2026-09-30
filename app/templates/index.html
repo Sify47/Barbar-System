@@ -13,7 +13,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#d4af37', // Gold/brass accent
+                        primary: '#d4af37',
                         secondary: '#1a1a1a',
                         dark: '#0a0a0a',
                         light: '#f5f5f0'
@@ -27,219 +27,495 @@
         }
     </script>
     <style>
-        /* Custom scrollbar for webkit browsers */
-        ::-webkit-scrollbar {
-            width: 8px;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
+        img { image-rendering: -webkit-optimize-contrast; }
+
+        /* Mobile menu animation */
+        #mobile-menu {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
         }
-        ::-webkit-scrollbar-track {
-            background: #0a0a0a;
+        #mobile-menu.open {
+            transform: translateX(0);
         }
-        ::-webkit-scrollbar-thumb {
-            background: #d4af37;
-            border-radius: 4px;
-        }
-        /* Smooth image rendering */
-        img {
-            image-rendering: -webkit-optimize-contrast;
-        }
+        /* Prevent body scroll when menu open */
+        body.menu-open { overflow: hidden; }
     </style>
 </head>
-<body class="bg-dark text-light font-sans antialiased selection:bg-primary selection:text-dark">
+<body class="bg-dark text-light font-sans antialiased selection:bg-primary selection:text-dark overflow-x-hidden">
 
-    <!-- Navigation -->
-    <nav class="fixed w-full z-50 bg-dark/90 backdrop-blur-md border-b border-white/10">
-        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#" class="font-serif text-2xl font-bold tracking-wide text-light">
-                BARBER<span class="text-primary">.</span>
-            </a>
-            <div class="hidden md:flex space-x-10 text-sm font-medium tracking-widest uppercase text-light/70">
-                <a href="#barbers" class="hover:text-primary transition-colors duration-300">Barbers</a>
-                <a href="#services" class="hover:text-primary transition-colors duration-300">Services</a>
-                <a href="#hours" class="hover:text-primary transition-colors duration-300">Hours</a>
-            </div>
-            <a href="#" class="hidden md:inline-flex items-center px-6 py-2.5 border border-primary text-primary text-sm font-semibold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
-                Book Now
-            </a>
-            <!-- Mobile menu button -->
-            <button class="md:hidden text-light focus:outline-none">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
-                </svg>
-            </button>
+    <!-- ===================== NAVIGATION ===================== -->
+<nav class="fixed w-full z-50 bg-dark/90 backdrop-blur-md border-b border-white/10">
+    <div class="container mx-auto px-5 sm:px-6 py-4 flex justify-between items-center">
+
+        <!-- Brand -->
+        <a href="/" class="font-serif text-xl sm:text-2xl font-bold tracking-wide text-light">
+            BARBER<span class="text-primary">.</span>
+        </a>
+
+        <!-- Desktop nav -->
+        <div class="hidden md:flex space-x-10 text-sm font-medium tracking-widest uppercase text-light/70">
+            <a href="#barbers"  class="hover:text-primary transition-colors duration-300">Barbers</a>
+            <a href="#packages" class="hover:text-primary transition-colors duration-300">Packages</a>
+            <a href="#services" class="hover:text-primary transition-colors duration-300">Services</a>
+            <a href="#hours"    class="hover:text-primary transition-colors duration-300">Hours</a>
         </div>
+
+        <!-- Desktop actions -->
+        <div class="hidden md:flex items-center gap-3">
+
+            {% if session.get('customer_id') %}
+                <!-- Logged in -->
+                <a href="{{ url_for('customer.dashboard') }}"
+                   class="px-5 py-2.5 text-light/70 hover:text-primary text-xs font-semibold tracking-widest uppercase transition-colors">
+                    My Bookings
+                </a>
+
+                <a href="/booking"
+                   class="inline-flex items-center px-6 py-2.5 border border-primary text-primary text-sm font-semibold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
+                    Book Now
+                </a>
+
+                <form method="POST" action="{{ url_for('customer.logout') }}" class="inline">
+                    <button type="submit"
+                            class="px-5 py-2.5 text-red-400/70 hover:text-red-400 text-xs font-semibold tracking-widest uppercase transition-colors">
+                        Logout
+                    </button>
+                </form>
+
+            {% else %}
+                <!-- Guest -->
+                <a href="{{ url_for('customer.login') }}"
+                   class="px-5 py-2.5 text-light/70 hover:text-primary text-xs font-semibold tracking-widest uppercase transition-colors">
+                    Log In
+                </a>
+
+                <a href="/booking"
+                   class="inline-flex items-center px-6 py-2.5 border border-primary text-primary text-sm font-semibold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
+                    Book Now
+                </a>
+            {% endif %}
+
+        </div>
+
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-btn" class="md:hidden text-light focus:outline-none p-2 -mr-2" aria-label="Open menu">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+        </button>
+    </div>
+</nav>
+
+
+<!-- ===================== MOBILE MENU ===================== -->
+<div id="mobile-menu" class="fixed inset-y-0 right-0 w-full sm:w-80 z-[60] bg-secondary border-l border-white/10 flex flex-col md:hidden">
+
+    <div class="flex justify-between items-center p-5 border-b border-white/10">
+        <span class="font-serif text-xl font-bold text-light">
+            BARBER<span class="text-primary">.</span>
+        </span>
+        <button id="mobile-menu-close" class="text-light p-2 -mr-2" aria-label="Close menu">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Nav links -->
+    <nav class="flex-1 flex flex-col p-6 gap-2 overflow-y-auto">
+        <a href="#barbers"  class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">Barbers</a>
+        <a href="#packages" class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">Packages</a>
+        <a href="#services" class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">Services</a>
+        <a href="#hours"    class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">Hours</a>
+
+        {% if session.get('customer_id') %}
+            <a href="{{ url_for('customer.dashboard') }}"
+               class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">
+                My Bookings
+            </a>
+            <a href="{{ url_for('customer.profile') }}"
+               class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">
+                Profile
+            </a>
+        {% else %}
+            <a href="{{ url_for('customer.login') }}"
+               class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">
+                Log In
+            </a>
+            <a href="{{ url_for('customer.register') }}"
+               class="mobile-link py-4 text-sm font-medium tracking-widest uppercase text-light/80 border-b border-white/5 hover:text-primary transition-colors">
+                Create Account
+            </a>
+        {% endif %}
     </nav>
 
-    <!-- Hero Section -->
-    <header class="relative h-screen flex items-center justify-center overflow-hidden">
-        <!-- Background Image Placeholder with Dark Overlay -->
+    <!-- Bottom actions -->
+    <div class="p-6 border-t border-white/10 space-y-3">
+        <a href="/booking"
+           class="mobile-link block w-full py-4 text-center bg-primary text-dark font-bold tracking-widest uppercase text-sm hover:bg-light transition-all duration-300">
+            Book Your Chair
+        </a>
+
+        {% if session.get('customer_id') %}
+            <form method="POST" action="{{ url_for('customer.logout') }}">
+                <button type="submit"
+                        class="mobile-link block w-full py-3 text-center border border-red-500/30 text-red-400 text-xs font-bold tracking-widest uppercase hover:bg-red-500/10 transition-all">
+                    Logout
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+    <!-- Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-[55] hidden md:hidden"></div>
+
+
+    <!-- ===================== HERO ===================== -->
+    <header class="relative min-h-[100svh] flex items-center justify-center overflow-hidden pt-20">
         <div class="absolute inset-0 z-0">
-            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070&auto=format&fit=crop" 
-                 alt="Barber Shop Interior" 
+            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?q=80&w=2070&auto=format&fit=crop"
+                 alt="Barber Shop Interior"
                  class="w-full h-full object-cover opacity-40">
             <div class="absolute inset-0 bg-gradient-to-t from-dark via-dark/70 to-transparent"></div>
         </div>
 
-        <!-- Hero Content -->
-        <div class="relative z-10 text-center px-4 max-w-5xl mx-auto">
-            <p class="text-primary text-sm font-semibold tracking-[0.3em] uppercase mb-6">Established • Since 2017</p>
-            <h1 class="font-serif text-6xl md:text-8xl lg:text-9xl font-bold leading-none mb-8">
+        <div class="relative z-10 text-center px-5 max-w-5xl mx-auto">
+            <p class="text-primary text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase mb-5 sm:mb-6">
+                Established • Since 2017
+            </p>
+            <h1 class="font-serif text-5xl sm:text-6xl md:text-8xl lg:text-9xl font-bold leading-[0.95] mb-6 sm:mb-8">
                 Hair <span class="italic font-light">Lovers</span>
             </h1>
-            <p class="text-light/60 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed">
+            <p class="text-light/60 text-base sm:text-lg md:text-xl max-w-2xl mx-auto mb-10 sm:mb-12 font-light leading-relaxed px-2">
                 Experience the pinnacle of men's grooming. Precision cuts, classic shaves, and a tradition of excellence.
             </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-6">
-                <a href="/booking" class="px-10 py-4 bg-primary text-dark font-bold tracking-widest uppercase text-sm hover:bg-light transition-all duration-300">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-6 max-w-xs sm:max-w-none mx-auto">
+                <a href="/booking"
+                   class="px-8 sm:px-10 py-4 bg-primary text-dark font-bold tracking-widest uppercase text-xs sm:text-sm hover:bg-light transition-all duration-300">
                     Book Your Chair
                 </a>
-                <a href="#services" class="px-10 py-4 border border-light/30 text-light font-semibold tracking-widest uppercase text-sm hover:border-primary hover:text-primary transition-all duration-300">
+                <a href="#services"
+                   class="px-8 sm:px-10 py-4 border border-light/30 text-light font-semibold tracking-widest uppercase text-xs sm:text-sm hover:border-primary hover:text-primary transition-all duration-300">
                     Our Services
                 </a>
             </div>
         </div>
 
-        <!-- Scroll Indicator -->
-        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-            <div class="w-px h-16 bg-gradient-to-b from-transparent via-primary to-transparent"></div>
+        <div class="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+            <div class="w-px h-12 sm:h-16 bg-gradient-to-b from-transparent via-primary to-transparent"></div>
         </div>
     </header>
 
-    <!-- Our Story / About Section -->
-    <section class="py-24 md:py-32 px-6 relative">
+
+    <!-- ===================== OUR STORY ===================== -->
+    <section class="py-20 sm:py-24 md:py-32 px-5 sm:px-6 relative">
         <div class="container mx-auto max-w-4xl text-center">
-            <h2 class="font-serif text-4xl md:text-5xl font-bold mb-8">
+            <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold mb-6 sm:mb-8">
                 Our <span class="italic font-light text-primary">Story</span>
             </h2>
-            <p class="text-light/60 text-lg leading-relaxed font-light max-w-3xl mx-auto">
-                Founded in 2017, we have grown to become a landmark in premium men's grooming. 
-                With a team of dedicated artists and experts, we are committed to exceeding the industry standard 
+            <p class="text-light/60 text-base sm:text-lg leading-relaxed font-light max-w-3xl mx-auto">
+                Founded in 2017, we have grown to become a landmark in premium men's grooming.
+                With a team of dedicated artists and experts, we are committed to exceeding the industry standard
                 and helping every client find the perfect look that suits their personality.
             </p>
         </div>
     </section>
 
-    <!-- Barbers Section -->
-    <section id="barbers" class="py-24 md:py-32 px-6 bg-secondary/30">
+
+    <!-- ===================== BARBERS ===================== -->
+    <section id="barbers" class="py-20 sm:py-24 md:py-32 px-5 sm:px-6 bg-secondary/30">
         <div class="container mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-16 border-b border-white/10 pb-8">
+
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 sm:mb-16 border-b border-white/10 pb-6 sm:pb-8 gap-4">
                 <div>
-                    <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">The Team</p>
-                    <h2 class="font-serif text-4xl md:text-5xl font-bold">Our <span class="italic font-light">Barbers</span></h2>
+                    <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-3 sm:mb-4">The Team</p>
+                    <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold">
+                        Our <span class="italic font-light">Barbers</span>
+                    </h2>
                 </div>
-                <a href="#" class="text-sm font-semibold tracking-widest uppercase text-primary hover:text-light transition-colors mt-4 md:mt-0 flex items-center gap-2">
-                    View All <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                <a href="/booking"
+                   class="text-sm font-semibold tracking-widest uppercase text-primary hover:text-light transition-colors flex items-center gap-2">
+                    Book with a Barber
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
                 </a>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Barbers Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                 {% for barber in barbers %}
                 <div class="group relative overflow-hidden bg-dark border border-white/5 hover:border-primary/50 transition-all duration-500">
-                    <!-- Placeholder for barber image -->
                     <div class="aspect-[3/4] bg-secondary/50 overflow-hidden">
-                        <img src="https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=800&auto=format&fit=crop" 
-                             alt="{{ barber.name }}" 
+                        <img src="https://images.unsplash.com/photo-1595152772835-219674b2a8a6?q=80&w=800&auto=format&fit=crop"
+                             alt="{{ barber.name }}"
                              class="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700">
                     </div>
-                    <div class="p-6 absolute bottom-0 left-0 w-full bg-gradient-to-t from-dark via-dark/80 to-transparent pt-16">
-                        <h3 class="font-serif text-2xl font-bold text-light">{{ barber.name }}</h3>
-                        <p class="text-primary text-xs font-semibold tracking-widest uppercase mt-1">Master Barber</p>
+                    <div class="p-4 sm:p-6 absolute bottom-0 left-0 w-full bg-gradient-to-t from-dark via-dark/80 to-transparent pt-12 sm:pt-16">
+                        <h3 class="font-serif text-lg sm:text-2xl font-bold text-light truncate">{{ barber.name }}</h3>
+                        <p class="text-primary text-[10px] sm:text-xs font-semibold tracking-widest uppercase mt-1">Master Barber</p>
                     </div>
+                </div>
+                {% else %}
+                <div class="col-span-2 lg:col-span-3 text-center py-16">
+                    <p class="text-light/40 text-sm">Our team is coming soon.</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
     </section>
 
-    <!-- Services Section -->
-    <section id="services" class="py-24 md:py-32 px-6">
-        <div class="container mx-auto max-w-5xl">
-            <div class="text-center mb-20">
-                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">What We Offer</p>
-                <h2 class="font-serif text-4xl md:text-5xl font-bold">Our <span class="italic font-light">Services</span></h2>
+
+    <!-- ===================== PACKAGES ===================== -->
+    <section id="packages" class="py-20 sm:py-24 md:py-32 px-5 sm:px-6">
+        <div class="container mx-auto max-w-6xl">
+
+            <!-- Header -->
+            <div class="text-center mb-12 sm:mb-20">
+                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-3 sm:mb-4">Save More</p>
+                <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold">
+                    Our <span class="italic font-light">Packages</span>
+                </h2>
+                <p class="text-light/50 text-sm sm:text-base mt-4 max-w-xl mx-auto font-light">
+                    Bundle multiple services together and enjoy a better experience at a better price.
+                </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
-                {% for service in services %}
-                <div class="group flex justify-between items-start py-6 border-b border-white/10 hover:border-primary/50 transition-colors duration-300">
-                    <div>
-                        <h3 class="font-serif text-xl font-semibold text-light group-hover:text-primary transition-colors">{{ service.name }}</h3>
-                        <p class="text-light/40 text-sm mt-1">Professional grooming service</p>
+            <!-- Packages Grid -->
+            {% if packages %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
+                {% for package in packages %}
+                <div class="group relative bg-secondary/30 border border-white/10 hover:border-primary/50 transition-all duration-500 overflow-hidden flex flex-col">
+
+                    <!-- Badge -->
+                    {% if loop.first %}
+                    <div class="absolute top-0 right-0 bg-primary text-dark text-[10px] font-bold tracking-widest uppercase px-4 py-1.5 z-10">
+                        Popular
                     </div>
-                    <span class="font-serif text-2xl font-bold text-primary">${{ service.price }}</span>
+                    {% endif %}
+
+                    <!-- Content -->
+                    <div class="p-6 sm:p-8 flex-1">
+
+                        <h3 class="font-serif text-2xl sm:text-3xl font-bold text-light mb-2">
+                            {{ package.name }}
+                        </h3>
+
+                        {% if package.description %}
+                        <p class="text-light/50 text-sm mb-6 leading-relaxed">
+                            {{ package.description }}
+                        </p>
+                        {% endif %}
+
+                        <!-- Price -->
+                        <div class="flex items-baseline gap-2 mb-6 pb-6 border-b border-white/10">
+                            <span class="font-serif text-4xl sm:text-5xl font-bold text-primary">
+                                ${{ "%.0f"|format(package.price) }}
+                            </span>
+                            {% if package.duration %}
+                            <span class="text-light/40 text-xs tracking-widest uppercase">
+                                · {{ package.duration }} min
+                            </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Included Services -->
+                        {% if package.services %}
+                        <div class="mb-6">
+                            <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-3">Includes</p>
+                            <ul class="space-y-2.5">
+                                {% for s in package.services %}
+                                <li class="flex items-start gap-3 text-sm">
+                                    <svg class="w-4 h-4 flex-none mt-0.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                    <span class="text-light/80">{{ s.name }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+
+                    </div>
+
+                    <!-- CTA -->
+                    <div class="p-6 sm:p-8 pt-0">
+                        <a href="/booking"
+                           class="block w-full py-3.5 text-center border border-primary text-primary text-xs font-bold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
+                            Book This Package
+                        </a>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
-            
-            <div class="text-center mt-16">
-                <a href="#" class="inline-block px-10 py-4 bg-primary text-dark font-bold tracking-widest uppercase text-sm hover:bg-light transition-all duration-300">
-                    View Full Menu
+            {% else %}
+            <div class="text-center py-16 border border-white/5 bg-secondary/20">
+                <p class="text-light/40 text-sm">Packages are coming soon.</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+
+    <!-- ===================== SERVICES ===================== -->
+    <section id="services" class="py-20 sm:py-24 md:py-32 px-5 sm:px-6 bg-secondary/30">
+        <div class="container mx-auto max-w-5xl">
+
+            <div class="text-center mb-12 sm:mb-20">
+                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-3 sm:mb-4">What We Offer</p>
+                <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold">
+                    Our <span class="italic font-light">Services</span>
+                </h2>
+            </div>
+
+            <!-- Services List -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-12 gap-y-0">
+                {% for service in services %}
+                <div class="group flex justify-between items-start py-5 sm:py-6 border-b border-white/10 hover:border-primary/50 transition-colors duration-300 gap-4">
+                    <div class="min-w-0 flex-1">
+                        <h3 class="font-serif text-lg sm:text-xl font-semibold text-light group-hover:text-primary transition-colors">
+                            {{ service.name }}
+                        </h3>
+                        <p class="text-light/40 text-xs sm:text-sm mt-1">Professional grooming service</p>
+                    </div>
+                    <span class="font-serif text-xl sm:text-2xl font-bold text-primary whitespace-nowrap">
+                        ${{ "%.0f"|format(service.price) }}
+                    </span>
+                </div>
+                {% else %}
+                <div class="col-span-1 md:col-span-2 text-center py-16">
+                    <p class="text-light/40 text-sm">Services are coming soon.</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- CTA -->
+            <div class="text-center mt-12 sm:mt-16">
+                <a href="/booking"
+                   class="inline-block w-full sm:w-auto px-8 sm:px-10 py-4 bg-primary text-dark font-bold tracking-widest uppercase text-xs sm:text-sm hover:bg-light transition-all duration-300">
+                    Book an Appointment
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- Working Hours Section -->
-    <section id="hours" class="py-24 md:py-32 px-6 bg-secondary/30">
+
+    <!-- ===================== WORKING HOURS ===================== -->
+    <section id="hours" class="py-20 sm:py-24 md:py-32 px-5 sm:px-6">
         <div class="container mx-auto max-w-3xl text-center">
-            <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">Visit Us</p>
-            <h2 class="font-serif text-4xl md:text-5xl font-bold mb-12">Working <span class="italic font-light">Hours</span></h2>
-            
-            <div class="space-y-4 text-light/70">
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Monday</span>
-                    <span>10:00 AM – 12:00 AM</span>
+
+            <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-3 sm:mb-4">Visit Us</p>
+            <h2 class="font-serif text-3xl sm:text-4xl md:text-5xl font-bold mb-10 sm:mb-12">
+                Working <span class="italic font-light">Hours</span>
+            </h2>
+
+            <div class="space-y-0 text-light/70 border-t border-white/5">
+                {% set days = [
+                    ('Monday',    '10:00 AM – 12:00 AM'),
+                    ('Tuesday',   '10:00 AM – 12:00 AM'),
+                    ('Wednesday', '10:00 AM – 12:00 AM'),
+                    ('Thursday',  '10:00 AM – 12:00 AM'),
+                    ('Friday',    '10:00 AM – 12:00 AM'),
+                    ('Saturday',  '10:00 AM – 12:00 AM'),
+                    ('Sunday',    '10:00 AM – 12:00 AM'),
+                ] %}
+                {% for day, hrs in days %}
+                <div class="flex justify-between items-center border-b border-white/5 py-3.5 sm:py-4 text-sm sm:text-base">
+                    <span class="font-medium text-light">{{ day }}</span>
+                    <span class="text-light/60 font-mono text-xs sm:text-sm">{{ hrs }}</span>
                 </div>
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Tuesday</span>
-                    <span>10:00 AM – 12:00 AM</span>
-                </div>
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Wednesday</span>
-                    <span>10:00 AM – 12:00 AM</span>
-                </div>
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Thursday</span>
-                    <span>10:00 AM – 12:00 AM</span>
-                </div>
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Friday</span>
-                    <span>10:00 AM – 12:00 AM</span>
-                </div>
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Saturday</span>
-                    <span>10:00 AM – 12:00 AM</span>
-                </div>
-                <div class="flex justify-between items-center border-b border-white/5 pb-4">
-                    <span class="font-medium">Sunday</span>
-                    <span>10:00 AM – 12:00 AM</span>
-                </div>
+                {% endfor %}
+            </div>
+
+            <!-- CTA -->
+            <div class="mt-10 sm:mt-12">
+                <a href="/booking"
+                   class="inline-block px-8 sm:px-10 py-4 border border-primary text-primary text-xs sm:text-sm font-bold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
+                    Reserve Your Spot
+                </a>
             </div>
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="bg-dark border-t border-white/10 py-12 px-6">
+
+    <!-- ===================== FOOTER ===================== -->
+    <footer class="bg-secondary/30 border-t border-white/10 py-12 sm:py-16 px-5 sm:px-6">
         <div class="container mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-8">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 mb-10">
+
+                <!-- Brand -->
                 <div class="text-center md:text-left">
-                    <a href="#" class="font-serif text-2xl font-bold tracking-wide text-light">
+                    <a href="/" class="font-serif text-2xl font-bold tracking-wide text-light">
                         BARBER<span class="text-primary">.</span>
                     </a>
-                    <p class="text-light/40 text-sm mt-2">Premium Grooming Since 2017</p>
-                </div>
-                
-                <div class="flex space-x-8 text-sm font-medium tracking-widest uppercase text-light/60">
-                    <a href="#" class="hover:text-primary transition-colors">Instagram</a>
-                    <a href="#" class="hover:text-primary transition-colors">Facebook</a>
-                    <a href="#" class="hover:text-primary transition-colors">TikTok</a>
+                    <p class="text-light/40 text-sm mt-3">Premium Grooming Since 2017</p>
                 </div>
 
-                <p class="text-light/40 text-sm">
+                <!-- Links -->
+                <div class="flex flex-col items-center gap-3">
+                    <p class="text-[11px] font-bold tracking-widest uppercase text-light/40 mb-1">Follow Us</p>
+                    <div class="flex gap-6 text-sm font-medium tracking-widest uppercase text-light/60">
+                        <a href="#" class="hover:text-primary transition-colors">Instagram</a>
+                        <a href="#" class="hover:text-primary transition-colors">Facebook</a>
+                        <a href="#" class="hover:text-primary transition-colors">TikTok</a>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="flex flex-col items-center md:items-end gap-2 text-sm text-light/50">
+                    <a href="#barbers"  class="hover:text-primary transition-colors">Our Barbers</a>
+                    <a href="#packages" class="hover:text-primary transition-colors">Packages</a>
+                    <a href="#services" class="hover:text-primary transition-colors">Services</a>
+                    <a href="#hours"    class="hover:text-primary transition-colors">Working Hours</a>
+                </div>
+            </div>
+
+            <!-- Bottom -->
+            <div class="pt-6 border-t border-white/5 text-center">
+                <p class="text-light/40 text-xs sm:text-sm">
                     &copy; 2026 Barber System. All rights reserved.
                 </p>
             </div>
         </div>
     </footer>
 
+
+    <!-- ===================== SCRIPTS ===================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const menu     = document.getElementById('mobile-menu');
+        const overlay  = document.getElementById('mobile-overlay');
+        const openBtn  = document.getElementById('mobile-menu-btn');
+        const closeBtn = document.getElementById('mobile-menu-close');
+        const links    = document.querySelectorAll('.mobile-link');
+
+        function openMenu() {
+            menu.classList.add('open');
+            overlay.classList.remove('hidden');
+            document.body.classList.add('menu-open');
+        }
+        function closeMenu() {
+            menu.classList.remove('open');
+            overlay.classList.add('hidden');
+            document.body.classList.remove('menu-open');
+        }
+
+        if (openBtn)  openBtn.addEventListener('click', openMenu);
+        if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+        if (overlay)  overlay.addEventListener('click', closeMenu);
+        links.forEach(l => l.addEventListener('click', closeMenu));
+
+        // Close on Escape
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeMenu();
+        });
+    });
+    </script>
 </body>
 </html>

@@ -1,0 +1,130 @@
+{% extends "admin/layout.html" %}
+{% block title %}Coupons{% endblock %}
+{% block content %}
+
+<!-- ============ Header ============ -->
+<div class="mb-8 flex justify-between items-end flex-wrap gap-4">
+    <div>
+        <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-2">Admin Panel</p>
+        <h2 class="font-serif text-3xl md:text-4xl font-bold text-light">
+            Coupons
+        </h2>
+    </div>
+    <a href="{{ url_for('admin.add_coupon') }}"
+       class="px-6 py-2.5 bg-primary text-dark text-xs font-bold tracking-widest uppercase hover:bg-light transition-all duration-300">
+        + Add Coupon
+    </a>
+</div>
+
+<!-- ============ Table ============ -->
+<div class="bg-secondary/30 border border-white/5 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full">
+            <thead>
+                <tr class="border-b border-white/10">
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Code</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Discount</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Min</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Uses</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Valid</th>
+                    <th class="px-5 py-4 text-left text-[11px] font-bold tracking-widest uppercase text-light/50">Active</th>
+                    <th class="px-5 py-4 text-right text-[11px] font-bold tracking-widest uppercase text-light/50">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in pagination.items %}
+            <tr class="border-b border-white/5 hover:bg-white/[0.02] transition-colors">
+                <td class="px-5 py-4">
+                    <span class="font-mono text-primary font-bold">{{ c.code }}</span>
+                    {% if c.description %}
+                        <div class="text-xs text-light/40 mt-0.5">{{ c.description }}</div>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-4 text-sm text-light">
+                    {% if c.discount_type == 'percent' %}
+                        {{ c.value|int }}%
+                    {% else %}
+                        ${{ "%.2f"|format(c.value) }}
+                    {% endif %}
+                </td>
+                <td class="px-5 py-4 text-sm text-light/70">
+                    ${{ "%.2f"|format(c.min_amount or 0) }}
+                </td>
+                <td class="px-5 py-4 text-sm text-light/70">
+                    {{ c.used_count or 0 }}{% if c.max_uses %} / {{ c.max_uses }}{% endif %}
+                </td>
+                <td class="px-5 py-4 text-xs text-light/50">
+                    {% if c.valid_from or c.valid_to %}
+                        {{ c.valid_from.strftime('%b %d') if c.valid_from else '…' }}
+                        → {{ c.valid_to.strftime('%b %d, %y') if c.valid_to else '…' }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+                <td class="px-5 py-4">
+                    {% if c.is_active %}
+                        <span class="text-[11px] tracking-widest uppercase text-green-400 border border-green-400/30 bg-green-400/10 px-2 py-0.5">
+                            Active
+                        </span>
+                    {% else %}
+                        <span class="text-[11px] tracking-widest uppercase text-light/40 border border-white/10 px-2 py-0.5">
+                            Off
+                        </span>
+                    {% endif %}
+                </td>
+                <td class="px-5 py-4 text-right">
+                    <div class="flex justify-end gap-2">
+                        <a href="{{ url_for('admin.edit_coupon', coupon_id=c.id) }}"
+                           class="px-4 py-1.5 border border-white/10 text-light/70 text-[11px] font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+                            Edit
+                        </a>
+                        <form method="POST" action="{{ url_for('admin.delete_coupon', coupon_id=c.id) }}"
+                              onsubmit="return confirm('Delete this coupon?');" class="inline">
+                            <button type="submit"
+                                    class="px-4 py-1.5 border border-red-500/30 text-red-400 text-[11px] font-semibold tracking-widest uppercase hover:bg-red-500/10 transition-all">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="px-5 py-16 text-center">
+                    <p class="text-light/40 text-sm">No coupons yet.</p>
+                    <a href="{{ url_for('admin.add_coupon') }}"
+                       class="inline-block mt-4 text-primary text-xs font-bold tracking-widest uppercase hover:text-light transition-colors">
+                        + Create your first coupon
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============ Pagination ============ -->
+{% if pagination.pages > 1 %}
+<div class="mt-8 flex justify-between items-center">
+    {% if pagination.has_prev %}
+        <a href="{{ url_for('admin.list_coupons', page=pagination.prev_num) }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            ← Prev
+        </a>
+    {% else %}<span></span>{% endif %}
+
+    <span class="text-light/50 text-xs font-semibold tracking-widest uppercase">
+        Page {{ pagination.page }} / {{ pagination.pages }}
+    </span>
+
+    {% if pagination.has_next %}
+        <a href="{{ url_for('admin.list_coupons', page=pagination.next_num) }}"
+           class="px-5 py-2.5 border border-white/10 text-light/70 text-xs font-semibold tracking-widest uppercase hover:border-primary hover:text-primary transition-all">
+            Next →
+        </a>
+    {% else %}<span></span>{% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
