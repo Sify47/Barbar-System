@@ -1,0 +1,5 @@
+Flask>=2.3
+flask_sqlalchemy
+flask_migrate
+flask_socketio
+pymysql
