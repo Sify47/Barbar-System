@@ -1,0 +1,11 @@
+{% extends "admin/layout.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Admin Dashboard</h1>
+<p>Welcome, {{ current_user.username }}!</p>
+<ul class="space-y-2">
+    <li><a href="{{ url_for('admin.list_barbers') }}" class="text-blue-600 hover:underline">Manage Barbers</a></li>
+    <li><a href="{{ url_for('admin.list_services') }}" class="text-blue-600 hover:underline">Manage Services</a></li>
+    <li><a href="{{ url_for('admin.list_bookings') }}" class="text-blue-600 hover:underline">View Bookings</a></li>
+</ul>
+{% endblock %}

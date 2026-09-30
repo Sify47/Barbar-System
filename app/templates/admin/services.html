@@ -1,0 +1,43 @@
+{% extends "admin/layout.html" %}
+{% block title %}Services{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-semibold mb-4">Services</h2>
+<a href="{{ url_for('admin.add_service') }}" class="bg-indigo-600 text-white px-4 py-2 rounded mb-4 inline-block">Add Service</a>
+<table class="min-w-full bg-white border border-gray-200">
+  <thead>
+    <tr>
+      <th class="px-4 py-2 border-b">ID</th>
+      <th class="px-4 py-2 border-b">Name</th>
+      <th class="px-4 py-2 border-b">Price</th>
+      <th class="px-4 py-2 border-b">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for service in pagination.items %}
+    <tr>
+      <td class="px-4 py-2 border-b">{{ service.id }}</td>
+      <td class="px-4 py-2 border-b">{{ service.name }}</td>
+      <td class="px-4 py-2 border-b">${{ "%.2f"|format(service.price) }}</td>
+      <td class="px-4 py-2 border-b">
+        <a href="{{ url_for('admin.edit_service', service_id=service.id) }}" class="text-blue-600 mr-2">Edit</a>
+        <form action="{{ url_for('admin.delete_service', service_id=service.id) }}" method="post" style="display:inline;" onsubmit="return confirm('Delete this service?');">
+          <button type="submit" class="text-red-600">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="4" class="px-4 py-2 border-b text-center">No services found.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="mt-4 flex justify-between">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.list_services', page=pagination.prev_num) }}" class="text-blue-600">&laquo; Prev</a>
+  {% endif %}
+  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('admin.list_services', page=pagination.next_num) }}" class="text-blue-600">Next &raquo;</a>
+  {% endif %}
+</div>
+{% endblock %}

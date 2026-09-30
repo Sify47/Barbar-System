@@ -11,3 +11,20 @@ class Booking(db.Model):
     time = db.Column(db.Time, nullable=False)
     status = db.Column(db.String(20), default='Pending')
     payment_status = db.Column(db.String(20), default='Unpaid')
+
+    # relationships
+    customer = db.relationship('Customer', backref='bookings')
+    barber = db.relationship('Barber', backref='bookings')
+    service = db.relationship('Service', backref='bookings')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "customer_id": self.customer_id,
+            "barber_id": self.barber_id,
+            "service_id": self.service_id,
+            "date": self.date.isoformat() if self.date else None,
+            "time": self.time.isoformat() if self.time else None,
+            "status": self.status,
+            "payment_status": self.payment_status,
+        }

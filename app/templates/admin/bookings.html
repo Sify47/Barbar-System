@@ -1,0 +1,65 @@
+{% extends "admin/layout.html" %}
+{% block title %}Bookings{% endblock %}
+{% block content %}
+<h2 class="text-2xl font-semibold mb-4">Bookings</h2>
+<form class="mb-4 flex space-x-4 items-center" method="get" action="{{ url_for('admin.list_bookings') }}">
+  <div>
+    <label class="block text-sm font-medium mb-1">Status</label>
+    <select name="status" class="border rounded px-2 py-1">
+      <option value="" {% if not status %}selected{% endif %}>All</option>
+      <option value="pending" {% if status == 'pending' %}selected{% endif %}>Pending</option>
+      <option value="confirmed" {% if status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+      <option value="cancelled" {% if status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+    </select>
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Barber ID</label>
+    <input type="number" name="barber_id" value="{{ barber_id or '' }}" class="border rounded px-2 py-1">
+  </div>
+  <button type="submit" class="bg-indigo-600 text-white px-4 py-1 rounded">Filter</button>
+  <a href="{{ url_for('admin.list_bookings') }}" class="text-gray-600 hover:underline">Clear</a>
+</form>
+<table class="min-w-full bg-white border border-gray-200">
+  <thead>
+    <tr>
+      <th class="px-4 py-2 border-b">ID</th>
+      <th class="px-4 py-2 border-b">Customer</th>
+      <th class="px-4 py-2 border-b">Barber</th>
+      <th class="px-4 py-2 border-b">Service</th>
+      <th class="px-4 py-2 border-b">Date</th>
+      <th class="px-4 py-2 border-b">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for booking in pagination.items %}
+  <tr>
+    <td class="px-4 py-2 border-b">{{ booking.id }}</td>
+    <td class="px-4 py-2 border-b">{{ booking.customer.name if booking.customer else '' }}</td>
+    <td class="px-4 py-2 border-b">{{ booking.barber.name if booking.barber else '' }}</td>
+    <td class="px-4 py-2 border-b">{{ booking.service.name if booking.service else '' }}</td>
+    <td class="px-4 py-2 border-b">
+        {% if booking.date %}
+          {{ booking.date.strftime('%Y-%m-%d') }}
+        {% endif %}
+        {% if booking.time %}
+          at {{ booking.time.strftime('%H:%M') }}
+        {% endif %}
+    </td>
+    <td class="px-4 py-2 border-b">{{ booking.status }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="6" class="px-4 py-2 border-b text-center">No bookings found.</td></tr>
+  {% endfor %}
+</tbody>
+
+</table>
+<div class="mt-4 flex justify-between">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.list_bookings', page=pagination.prev_num, status=status, barber_id=barber_id) }}" class="text-blue-600">&laquo; Prev</a>
+  {% endif %}
+  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('admin.list_bookings', page=pagination.next_num, status=status, barber_id=barber_id) }}" class="text-blue-600">Next &raquo;</a>
+  {% endif %}
+</div>
+{% endblock %}

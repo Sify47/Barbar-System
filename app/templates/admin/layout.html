@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex">
+    <nav class="w-64 bg-white shadow-md flex-none">
+        <div class="p-4 font-semibold text-xl">Admin Panel</div>
+        <ul class="text-gray-700">
+            <li class="px-4 py-2 hover:bg-gray-200"><a href="{{ url_for('admin.dashboard') }}">Dashboard</a></li>
+            <li class="px-4 py-2 hover:bg-gray-200"><a href="{{ url_for('admin.list_barbers') }}">Barbers</a></li>
+            <li class="px-4 py-2 hover:bg-gray-200"><a href="{{ url_for('admin.list_services') }}">Services</a></li>
+            <li class="px-4 py-2 hover:bg-gray-200"><a href="{{ url_for('admin.list_bookings') }}">Bookings</a></li>
+            <li class="px-4 py-2 hover:bg-gray-200">
+                <a href="{{ url_for('admin.list_customers') }}">Customers</a>
+            </li>
+            <li class="px-4 py-2 hover:bg-gray-200"><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+
+        </ul>
+    </nav>
+    <main class="flex-1 p-6 overflow-y-auto">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -16,7 +16,7 @@ class BaseConfig:
 
 class DevelopmentConfig(BaseConfig):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:password@localhost/barber_system_dev"
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root@localhost/barber_system_dev"
 
 
 class ProductionConfig(BaseConfig):
