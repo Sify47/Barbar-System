@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book an Appointment – Barber System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#d4af37',
+                        secondary: '#1a1a1a',
+                        dark: '#0a0a0a',
+                        light: '#f5f5f0'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 4px; }
+        input, select, textarea {
+            color-scheme: dark;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #d4af37;
+            box-shadow: 0 0 0 1px #d4af37;
+        }
+    </style>
+</head>
+<body class="bg-dark text-light font-sans antialiased selection:bg-primary selection:text-dark">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-dark/90 backdrop-blur-md border-b border-white/10">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/" class="font-serif text-2xl font-bold tracking-wide text-light">
+                BARBER<span class="text-primary">.</span>
+            </a>
+            <div class="hidden md:flex space-x-10 text-sm font-medium tracking-widest uppercase text-light/70">
+                <a href="/#barbers" class="hover:text-primary transition-colors duration-300">Barbers</a>
+                <a href="/#services" class="hover:text-primary transition-colors duration-300">Services</a>
+                <a href="/#hours" class="hover:text-primary transition-colors duration-300">Hours</a>
+            </div>
+            <a href="{{ url_for('booking.booking_form') }}" class="hidden md:inline-flex items-center px-6 py-2.5 border border-primary text-primary text-sm font-semibold tracking-widest uppercase hover:bg-primary hover:text-dark transition-all duration-300">
+                Book Now
+            </a>
+            <button class="md:hidden text-light focus:outline-none">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Booking Form Section -->
+    <section class="min-h-screen pt-32 pb-24 px-6 flex items-center">
+        <div class="container mx-auto max-w-2xl">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <p class="text-primary text-xs font-bold tracking-[0.3em] uppercase mb-4">Reserve Your Chair</p>
+                <h1 class="font-serif text-5xl md:text-6xl font-bold mb-4">
+                    Book <span class="italic font-light">Now</span>
+                </h1>
+                <p class="text-light/50 text-lg font-light max-w-md mx-auto">
+                    Fill in your details and we'll confirm your appointment shortly.
+                </p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="mb-8 px-6 py-4 border-l-4 {% if category == 'success' %}border-green-500 bg-green-500/10 text-green-300{% else %}border-red-500 bg-red-500/10 text-red-300{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Form -->
+            <form action="{{ url_for('booking.create') }}" method="POST" class="space-y-6 bg-secondary/30 border border-white/5 p-8 md:p-10">
+                
+                <!-- Name -->
+                <div>
+                    <label for="name" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Full Name</label>
+                    <input type="text" name="name" id="name" required
+                           class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
+                           placeholder="John Doe">
+                </div>
+
+                <!-- Phone & Email -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="phone" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Phone</label>
+                        <input type="tel" name="phone" id="phone" required
+                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
+                               placeholder="+20 123 456 7890">
+                    </div>
+                    <div>
+                        <label for="email" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Email</label>
+                        <input type="email" name="email" id="email" required
+                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light placeholder-light/30 focus:border-primary transition-colors"
+                               placeholder="john@example.com">
+                    </div>
+                </div>
+
+                <!-- Barber & Service -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="barber_id" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Barber</label>
+                        <select name="barber_id" id="barber_id" required
+                                class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors appearance-none">
+                            <option value="" disabled selected class="text-light/30">Select a barber</option>
+                            {% for barber in barbers %}
+                                <option value="{{ barber.id }}">{{ barber.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="service_id" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Service</label>
+                        <select name="service_id" id="service_id" required
+                                class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors appearance-none">
+                            <option value="" disabled selected class="text-light/30">Select a service</option>
+                            {% for service in services %}
+                                <option value="{{ service.id }}">{{ service.name }} – ${{ service.price }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date & Time -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="date" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Date</label>
+                        <input type="date" name="date" id="date" required
+                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors">
+                    </div>
+                    <div>
+                        <label for="time" class="block text-xs font-semibold tracking-widest uppercase text-light/60 mb-2">Time</label>
+                        <input type="time" name="time" id="time" required
+                               class="w-full bg-dark border border-white/10 px-4 py-3 text-light focus:border-primary transition-colors">
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-4">
+                    <button type="submit"
+                            class="w-full py-4 bg-primary text-dark font-bold tracking-widest uppercase text-sm hover:bg-light transition-all duration-300">
+                        Confirm Booking
+                    </button>
+                </div>
+            </form>
+
+            <!-- Back link -->
+            <div class="text-center mt-8">
+                <a href="/" class="text-light/40 text-sm hover:text-primary transition-colors">
+                    ← Back to Home
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark border-t border-white/10 py-8 px-6">
+        <div class="container mx-auto text-center text-light/40 text-sm">
+            &copy; 2026 Barber System. All rights reserved.
+        </div>
+    </footer>
+
+    <!-- Set minimum date to today -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('date');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.min = today;
+        });
+    </script>
+
+</body>
+</html>
